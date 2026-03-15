@@ -1,8 +1,32 @@
+# --- Windows System Files ---
+# These are junk files Windows creates in your folder
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- Private Data ---
+# This prevents your 1 Lakh row Excel/CSV files from being public
 *.xlsx
 *.xls
 *.csv
+*.ods
+
+# --- Source Code Protection ---
+# This ensures only the SCRAMBLED code goes to GitHub.
+# It ignores any file with "backup" or "original" in the name.
 *backup*
-*readable*
-original_logic.html
-Thumbs.db
-Desktop.ini
+*original*
+*clean*
+readable_version.html
+
+# --- Antivirus & Logs ---
+# For your Quick Heal logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# --- IDE/Editor Files ---
+# If you use VS Code or Notepad++ backups
+.vscode/
+.idea/
+*.bak
