@@ -1,0 +1,8 @@
+*.xlsx
+*.xls
+*.csv
+*backup*
+*readable*
+original_logic.html
+Thumbs.db
+Desktop.ini
