@@ -8,12 +8,9 @@
 <head>
     <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MS GRADATION SOFTWARE 2026 | Teacher Seniority Management System</title>
-<meta name="title" content="MS GRADATION SOFTWARE 2026">
-<meta name="description" content="Official MS GRADATION SOFTWARE 2026 for Madhya Pradesh Teacher Seniority. Manage 52 districts data, audit logs, and seniority lists.">
-
-<meta name="keywords" content="MS GRADATION SOFTWARE 2026, MS Gradation ERP, MP Teacher Seniority 2026, DPI MS Gradation, Madhya Pradesh Seniority Portal">
+    <title>MS Gradation ERP - Optimized Layout</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -346,6 +343,53 @@ tr:hover td { background: #f1f7ff !important; }
     border: 2px solid #ff0000 !important; /* Bright Red Border */
     transition: background 0.3s;
 }
+
+/* ── REALTIME COLLABORATION STYLES ── */
+#onlineStatusBar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    background: #f0fdf4;
+    border-bottom: 1px solid #bbf7d0;
+    font-size: 11px;
+    flex-wrap: wrap;
+    min-height: 28px;
+}
+#onlineStatusBar .bar-label {
+    font-weight: 700;
+    color: #166534;
+    white-space: nowrap;
+}
+#onlineStatus {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+#notifBell {
+    display: none;
+    cursor: pointer;
+    font-size: 18px;
+    margin-left: auto;
+    position: relative;
+}
+@keyframes pulse-bell {
+    0%   { transform: rotate(0deg);   }
+    15%  { transform: rotate(15deg);  }
+    30%  { transform: rotate(-15deg); }
+    45%  { transform: rotate(10deg);  }
+    60%  { transform: rotate(-10deg); }
+    75%  { transform: rotate(5deg);   }
+    100% { transform: rotate(0deg);   }
+}
+.pulse-animation {
+    animation: pulse-bell 0.6s ease infinite;
+}
+tr.row-locked-external {
+    opacity: 0.45 !important;
+    pointer-events: none !important;
+    outline: 2px dashed #f97316;
+}
     </style>
 </head>
 <body>
@@ -412,6 +456,8 @@ tr:hover td { background: #f1f7ff !important; }
     </div>
 </div>
 <button type="button" onclick="showSummary()" style="background-color: #17a2b8; color: white;">Summary Dashboard</button>
+<button type="button" onclick="openLiveDashboard()" style="background-color: #6a1b9a; color: white; margin-left:6px;">📊 Live Dashboard</button>
+<button type="button" onclick="openCompletionTracker()" style="background-color: #1565c0; color: white; margin-left:6px; padding:8px 16px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:13px;">🏆 Completion Tracker</button>
 <button type="button" onclick="showAnalytics()" style="background-color: #e65100; color: white; padding:8px 16px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:13px;">📊 Analytics</button>
 <div id="uploadStatus" style="display:none; margin-top:10px;">
   <div style="background:#eee; border-radius:10px; overflow:hidden;">
@@ -465,22 +511,30 @@ style="padding:6px 14px; background:#c62828; color:white; border:none; border-ra
      <button onclick="openAdvancedFilter()" style="background:#002147; color:white; padding:5px 15px; border:none; border-radius:2px; cursor:pointer; font-weight:bold; margin-left:5px;">
     📊 ADVANCED FILTER
 </button>
-    </div>
-    <div class="sheet-title">माध्यमिक शिक्षक (MS) संवर्ग की अनंतिम वरीयता सूची - 01/04/2026  की स्थिति में</div>
-    <div class="scroll-area">
-        <table id="dataTable">
-            <thead><tr id="tableHead"></tr></thead>
-            <thead>
-    <tr id="headerRow">
-        </tr>
-    
-    <tr id="filterRow" style="background: #f2f2f2;">
-        </tr>
+    </div>
+    <!-- ── REALTIME: Online Users Bar ── -->
+    <div id="onlineStatusBar">
+        <span class="bar-label">🟢 Online Users:</span>
+        <div id="onlineStatus"><span style="color:#999; font-style:italic;">Connecting...</span></div>
+        <span id="notifBell" title="New updates available — click to refresh" onclick="loadData(); this.classList.remove('pulse-animation'); this.style.display='none';">🔔</span>
+    </div>
+
+    <div class="sheet-title">माध्यमिक शिक्षक (MS) संवर्ग की अनंतिम वरीयता सूची - 01/04/2026  की स्थिति में</div>
+    <div class="scroll-area">
+        <table id="dataTable">
+            <thead><tr id="tableHead"></tr></thead>
+            <thead>
+    <tr id="headerRow">
+        </tr>
+    
+    <tr id="filterRow" style="background: #f2f2f2;">
+        </tr>
 </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
 </div>
+
 <div id="formOverlay">
     <div id="formCard">
         <div class="form-header">
@@ -1007,6 +1061,9 @@ function checkLogin() {
 
         // --- AUDIT LOG ---
         auditLog('LOGIN', 'User logged in');
+
+        // --- REALTIME: Join collaboration channel ---
+        if (typeof initRealtime === 'function') initRealtime();
 
         console.log("Logged in successfully as: " + user);
     } else {
@@ -1694,6 +1751,12 @@ renderVirtual();
 // ✅ success message
 myAlert(`✅ Record ${uniqueIDValue} ${isNew ? "saved" : "updated"} successfully`);
 
+// --- REALTIME: Notify other users ---
+broadcastDataUpdate(
+    `${_realtimeDistrict()} ${isNew ? 'added new record' : 'updated record'}: ${uniqueIDValue}`,
+    isNew ? 'info' : 'update'
+);
+
         if (isNew) {
     selectedRowElement = null;
 }
@@ -1856,85 +1919,117 @@ async function deleteEntry() {
     const timestamp = new Date().toLocaleString();
     let finalReason = reason.trim() === "" ? "DELETED" : reason.toUpperCase();
 
-    // 3. Get Unique ID (Correct column index)
-    let uniqueID = selectedRowElement.cells[2].innerText.trim();
+    // 3. Get identifiers
+    // uniqueID  = field3 cell value  e.g. "ABC123"
+    // datasetId = data-id attribute  e.g. "ABC123_1" (bulk paste) OR "ABC123" (form saved)
+    let uniqueID  = selectedRowElement.cells[2].innerText.trim().toUpperCase();
+    let datasetId = (selectedRowElement.dataset.id || "").trim();
 
     try {
-        // 4. SUPABASE UPDATE (Firebase ki jagah)
-// 🔥 STEP 1: OLD DATA FETCH
-const { data: oldRow, error: fetchError } = await supabaseClient
-    .from('gradation_list')
-    .select('data')
-    .eq('unique_id', uniqueID)
-    .single();
+        // 🔥 STEP 1: Find the actual DB row — try both possible unique_id formats
+        // Records saved via form  → unique_id = field3         (e.g. "ABC123")
+        // Records saved via paste → unique_id = field3_serial  (e.g. "ABC123_1")
+        let dbUniqueId = null;
+        let updatedData = null;
 
-if (fetchError) throw fetchError;
+        // Try candidates in priority order: datasetId first, then plain uniqueID
+        const candidates = [...new Set([datasetId, uniqueID].filter(Boolean))];
 
-// 🔥 STEP 2: MODIFY DATA OBJECT
-let updatedData = oldRow.data;
+        for (let candidate of candidates) {
+            const { data: row, error: fetchErr } = await supabaseClient
+                .from('gradation_list')
+                .select('unique_id, data')
+                .eq('unique_id', candidate)
+                .maybeSingle();   // returns null instead of error when 0 rows
 
-updatedData.field27 = finalReason;
-updatedData.field28 = "DELETED";
-updatedData.field29 = `${district} | ${timestamp}`;
-
-await supabaseClient
-  .from("gradation_list")
-  .update({
-    data: updatedData
-  })
-  .eq("unique_id", uniqueID);
-if (error) throw error;
-// 🔥 NAYA CHANGE: Memory Array Update
-        if (window.filteredData) {
-            const index = window.filteredData.findIndex(r => r.uniqueId === uniqueID);
-            if (index !== -1) {
-                window.filteredData[index].field27 = finalReason;
-                window.filteredData[index].field28 = "DELETED";
-                window.filteredData[index].field29 = `${district} | ${timestamp}`;
+            if (!fetchErr && row) {
+                dbUniqueId  = row.unique_id;
+                updatedData = row.data;
+                break;
             }
         }
 
-        // 🔥 NAYA CHANGE: Table Refresh
-        renderVirtual();
-        // 5. UPDATE UI (Visual changes)
-        // Remark Column (Field 27)
-        if (selectedRowElement.cells[26]) {
-            selectedRowElement.cells[26].innerText = finalReason;
+        // If still not found, try a broader search by field3 value inside JSON data
+        if (!dbUniqueId) {
+            const { data: rows, error: searchErr } = await supabaseClient
+                .from('gradation_list')
+                .select('unique_id, data')
+                .filter('data->>field3', 'eq', uniqueID)
+                .limit(1);
+
+            if (!searchErr && rows && rows.length > 0) {
+                dbUniqueId  = rows[0].unique_id;
+                updatedData = rows[0].data;
+            }
         }
 
-        // Status Column
-        let statusCell = selectedRowElement.cells[27] || selectedRowElement.insertCell(27);
-        statusCell.innerText = "DELETED";
-        statusCell.style.color = "#d32f2f";
-        statusCell.style.fontWeight = "bold";
+        if (!dbUniqueId || !updatedData) {
+            throw new Error(`Record not found in DB for ID: ${uniqueID}`);
+        }
 
-        // Audit Trail Column
-        let auditCell = selectedRowElement.cells[28] || selectedRowElement.insertCell(28);
-        auditCell.innerText = `${district} | ${timestamp}`;
+        // 🔥 STEP 2: Modify data object
+        updatedData.field27 = finalReason;
+        updatedData.field28 = "DELETED";
+        updatedData.field29 = `${district} | ${timestamp}`;
 
-        // Highlight Row
-        selectedRowElement.style.backgroundColor = "#ffebee"; // Light Red
-        selectedRowElement.classList.remove('selected-row');
+        // 🔥 STEP 3: Update Supabase using the confirmed dbUniqueId
+        const { error: updateError } = await supabaseClient
+            .from("gradation_list")
+            .update({ data: updatedData })
+            .eq("unique_id", dbUniqueId);
 
-        // Reset variables
-        selectedRowElement = null; 
-        if (typeof clearForm === "function") clearForm(); 
+        if (updateError) throw updateError;
+
+        // 🔥 STEP 4: Update BOTH memory arrays (match by any known identifier)
+        const updateMemoryRow = (arr) => {
+            const index = arr.findIndex(r =>
+                r.uniqueId === dbUniqueId ||
+                r.uniqueId === datasetId  ||
+                (r.field3 || "").trim().toUpperCase() === uniqueID
+            );
+            if (index !== -1) {
+                arr[index].field27 = finalReason;
+                arr[index].field28 = "DELETED";
+                arr[index].field29 = `${district} | ${timestamp}`;
+                // Also sync uniqueId so future lookups work
+                arr[index].uniqueId = dbUniqueId;
+            }
+        };
+        if (window.fullData)     updateMemoryRow(window.fullData);
+        if (window.filteredData) updateMemoryRow(window.filteredData);
+
+        // 🔥 STEP 5: Re-render (memory is now correct → row gets red background from renderVirtual)
+        renderVirtual();
+
+        // 🔥 STEP 6: After re-render, scroll to and highlight the row
+        setTimeout(() => {
+            // Try finding by dbUniqueId or datasetId
+            let newRow = document.querySelector(`#tableBody tr[data-id="${dbUniqueId}"]`)
+                      || document.querySelector(`#tableBody tr[data-id="${datasetId}"]`);
+            if (newRow) {
+                newRow.style.backgroundColor = "#ffebee";
+                newRow.classList.remove('selected-row');
+                newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 50);
+
+        // Reset
+        selectedRowElement = null;
+        if (typeof clearForm === "function") clearForm();
+
+        // --- REALTIME: Notify others ---
+        broadcastDataUpdate(`${_realtimeDistrict()} deleted record: ${uniqueID}`, 'delete');
 
         setTimeout(() => {
             myAlert("✅ Record marked as Deleted in Database.");
         }, 100);
 
-  
-  } catch (error) {
-    console.error("Delete Error:", error);
-
-    // ✅ Agar backend success ho chuka hai but UI error aaya
-    myAlert("✅ Record marked as Deleted");
-
-    // Optional: UI cleanup
-    selectedRowElement = null;
-    if (typeof clearForm === "function") clearForm();
-  }
+    } catch (error) {
+        console.error("Delete Error:", error);
+        myAlert("❌ Delete failed: " + (error.message || "Unknown error"));
+        selectedRowElement = null;
+        if (typeof clearForm === "function") clearForm();
+    }
 }
 function selectRow(el) {
 // --- 1. UI RESET ---
@@ -1946,6 +2041,12 @@ function selectRow(el) {
         addBtn.style.opacity = "1";
         addBtn.style.pointerEvents = "auto";
     }
+
+    // --- REALTIME: Unlock previous row, lock new row ---
+    if (selectedRowElement && selectedRowElement !== el) {
+        unlockRow(selectedRowElement.dataset.id);
+    }
+    lockRow(el.dataset.id);
 
     selectedRowElement = el;
 // 🔥 STORE UNIQUE ID (REAL FIX)
@@ -2291,6 +2392,9 @@ function clearForm() {
     // Remove selection highlights
     document.querySelectorAll('#tableBody tr').forEach(r => r.classList.remove('selected-row'));
     if(document.getElementById('displaySNo')) document.getElementById('displaySNo').innerText = "---";
+
+    // --- REALTIME: Release row lock ---
+    if (selectedRowElement && typeof unlockRow === 'function') unlockRow(selectedRowElement.dataset.id);
 
     selectedRowElement = null; // Memory cleared
 }
@@ -3166,8 +3270,253 @@ async function deleteFromSupabase(uniqueID) {
     console.log("🗑 Deleted:", uniqueID);
   }
 }
-// ✅ AUTO LOAD ON START
-window.addEventListener("load", loadData);
+// ── SUPABASE REALTIME COLLABORATION MODULE ──────────────────────────────────
+let presenceChannel = null;
+
+// Use the already-logged-in user (set by checkLogin) — never stale localStorage
+function _realtimeUser()     { return window.currentUser || 'Unknown'; }
+function _realtimeDistrict() {
+    var u = window.currentUser || '';
+    if (!u) return 'UNKNOWN';
+    if (u === 'DPI') return 'DPI';
+    // JD users: e.g. "JDBHOPAL" → "JD BHOPAL"
+    if (u.startsWith('JD')) {
+        var jdPart = u.replace(/^JD/, '').trim();
+        return 'JD ' + jdPart;
+    }
+    // DEO users: e.g. "DEOMANDSAUR" → "MANDSAUR"
+    if (u.startsWith('DEO')) {
+        return u.replace(/^DEO/, '').trim() || u;
+    }
+    return u;
+}
+
+// Row-lock registry: { rowId → { user, district } }
+const _rowLocks = {};
+
+function initRealtime() {
+    // Clean up any existing channel first
+    if (presenceChannel) {
+        supabaseClient.removeChannel(presenceChannel);
+        presenceChannel = null;
+    }
+
+    const me = _realtimeUser();
+    const dist = _realtimeDistrict();
+
+    presenceChannel = supabaseClient.channel('ms-gradation-collab', {
+        config: { presence: { key: me } }
+    });
+
+    presenceChannel
+        // ── Presence: who is online ──
+        .on('presence', { event: 'sync' }, () => {
+            updateOnlineUsersUI(presenceChannel.presenceState());
+        })
+        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+            const _p = newPresences?.[0]; const _name = (_p?.district && _p.district !== 'UNKNOWN') ? _p.district : _labelFromKey(key); showNotification(`${_name} joined`, 'join');
+        })
+        .on('presence', { event: 'leave' }, ({ key }) => {
+            showNotification(`${_labelFromKey(key)} went offline`, 'leave');
+        })
+
+        // ── Broadcast: row locking ──
+        .on('broadcast', { event: 'row-locked' }, ({ payload }) => {
+            if (payload.user !== me) handleExternalLock(payload);
+        })
+        .on('broadcast', { event: 'row-unlocked' }, ({ payload }) => {
+            handleExternalUnlock(payload);
+        })
+
+        // ── Broadcast: data changed by someone else ──
+        .on('broadcast', { event: 'data-update' }, ({ payload }) => {
+            if (payload.user !== me) {
+                showNotification(payload.msg || 'Data updated by another user', payload.type || 'update');
+                // Auto-reload UNLESS user has a form open or a row selected (editing in progress)
+                const formOpen = document.getElementById('formOverlay')?.style.display === 'block';
+                const editingRow = selectedRowElement !== null;
+                if (!formOpen && !editingRow) {
+                    loadData(); // Silent background refresh
+                } else {
+                    // Form is open — just light up bell, user can click to reload after saving
+                    const bell = document.getElementById('notifBell');
+                    if (bell) { bell.style.display = 'inline'; bell.classList.add('pulse-animation'); }
+                }
+            }
+        })
+
+        .subscribe(async (status) => {
+            if (status === 'SUBSCRIBED') {
+                await presenceChannel.track({
+                    user: me,
+                    district: dist,
+                    onlineAt: new Date().toISOString()
+                });
+            }
+        });
+}
+
+// ── Online Users UI ──────────────────────────────────────────────────────────
+function _labelFromKey(key) {
+    // key = full login ID like "DEOMANDSAUR", "JDBHOPAL", "DPI"
+    if (!key) return 'User';
+    if (key === 'DPI') return 'DPI';
+    if (key.startsWith('JD')) return 'JD ' + key.replace(/^JD/, '').trim();
+    if (key.startsWith('DEO')) return key.replace(/^DEO/, '').trim();
+    return key;
+}
+
+function updateOnlineUsersUI(state) {
+    const div = document.getElementById('onlineStatus');
+    if (!div) return;
+
+    // state = { "DEOMANDSAUR": [{user,district,onlineAt,...}], ... }
+    const entries = Object.entries(state); // [ [key, presenceArray], ... ]
+
+    if (entries.length === 0) {
+        div.innerHTML = '<span style="color:#999;font-style:italic;">No other users online</span>';
+        return;
+    }
+
+    div.innerHTML = entries.map(([key, presArr]) => {
+        const p = Array.isArray(presArr) ? presArr[0] : presArr;
+
+        // Best label: district field > user field > key (always has value)
+        let label = '';
+        if (p && p.district && p.district !== 'UNKNOWN' && p.district !== 'Unknown') {
+            label = p.district;
+        } else if (p && p.user && p.user !== 'Unknown') {
+            label = _labelFromKey(p.user);
+        } else {
+            label = _labelFromKey(key); // key is always the login ID
+        }
+
+        const since = (p && p.onlineAt) ? new Date(p.onlineAt).toLocaleTimeString('en-IN') : '';
+        return `<span title="${label} | Online since: ${since}"
+               style="padding:2px 8px; background:#e8f5e9; border-radius:12px; font-size:10px; border:1px solid #4caf50; white-space:nowrap;">
+            🟢 ${label}
+         </span>`;
+    }).join('');
+}
+
+// ── Row Locking ──────────────────────────────────────────────────────────────
+function lockRow(rowId) {
+    if (!presenceChannel || !rowId) return;
+    _rowLocks[rowId] = { user: _realtimeUser(), district: _realtimeDistrict(), self: true };
+    presenceChannel.send({
+        type: 'broadcast',
+        event: 'row-locked',
+        payload: { rowId, user: _realtimeUser(), district: _realtimeDistrict() }
+    });
+}
+
+function unlockRow(rowId) {
+    if (!presenceChannel || !rowId) return;
+    delete _rowLocks[rowId];
+    presenceChannel.send({
+        type: 'broadcast',
+        event: 'row-unlocked',
+        payload: { rowId }
+    });
+}
+
+function handleExternalLock(data) {
+    _rowLocks[data.rowId] = { user: data.user, district: data.district, self: false };
+    // Apply to DOM if row is currently visible
+    const row = document.querySelector(`#tableBody tr[data-id="${data.rowId}"]`);
+    if (row) {
+        row.classList.add('row-locked-external');
+        row.title = `🔒 Being edited by ${data.district} (${data.user})`;
+        if (!row.querySelector('.lock-icon')) {
+            const icon = document.createElement('span');
+            icon.className = 'lock-icon';
+            icon.textContent = ' 🔒';
+            row.cells[2].appendChild(icon);
+        }
+    }
+}
+
+function handleExternalUnlock(data) {
+    delete _rowLocks[data.rowId];
+    const row = document.querySelector(`#tableBody tr[data-id="${data.rowId}"]`);
+    if (row) {
+        row.classList.remove('row-locked-external');
+        row.title = '';
+        row.querySelector('.lock-icon')?.remove();
+    }
+}
+
+// Re-apply locks after every renderVirtual (since DOM is rebuilt)
+const _origRenderVirtual = renderVirtual;
+renderVirtual = function() {
+    _origRenderVirtual.apply(this, arguments);
+    // Re-apply external locks to newly rendered rows
+    Object.keys(_rowLocks).forEach(rowId => {
+        const lock = _rowLocks[rowId];
+        if (!lock.self) {
+            const row = document.querySelector(`#tableBody tr[data-id="${rowId}"]`);
+            if (row && !row.classList.contains('row-locked-external')) {
+                row.classList.add('row-locked-external');
+                row.title = `🔒 Being edited by ${lock.district} (${lock.user})`;
+                if (!row.querySelector('.lock-icon')) {
+                    const icon = document.createElement('span');
+                    icon.className = 'lock-icon';
+                    icon.textContent = ' 🔒';
+                    row.cells[2].appendChild(icon);
+                }
+            }
+        }
+    });
+};
+
+// ── Notification Toast ────────────────────────────────────────────────────────
+const _toastColors = {
+    update: '#4caf50', join: '#2196f3', leave: '#9e9e9e',
+    delete: '#f44336', info: '#607d8b'
+};
+function showNotification(msg, type = 'info') {
+    // Show bell
+    const bell = document.getElementById('notifBell');
+    if (bell) { bell.style.display = 'inline'; bell.classList.add('pulse-animation'); }
+
+    const color = _toastColors[type] || _toastColors.info;
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position:fixed; bottom:20px; right:20px; z-index:100000;
+        background:#1e293b; color:white;
+        padding:11px 18px; border-radius:8px;
+        box-shadow:0 6px 20px rgba(0,0,0,0.35);
+        border-left:5px solid ${color};
+        font-size:13px; font-family:'Inter',sans-serif;
+        max-width:320px; word-wrap:break-word;
+        animation: slideIn 0.3s ease;
+    `;
+    toast.innerHTML = `🔔 ${msg}`;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.4s'; setTimeout(() => toast.remove(), 400); }, 4500);
+}
+
+// ── Broadcast helper (called after save/delete) ───────────────────────────────
+function broadcastDataUpdate(msg, type = 'update') {
+    if (!presenceChannel) return;
+    presenceChannel.send({
+        type: 'broadcast',
+        event: 'data-update',
+        payload: { msg, type, user: _realtimeUser(), district: _realtimeDistrict() }
+    });
+}
+
+// ── Init after login ──────────────────────────────────────────────────────────
+// Called from checkLogin() after successful login
+// (also called on page load as fallback if already logged in)
+window.addEventListener('load', () => {
+    // Small delay to let Supabase client initialize first
+    setTimeout(() => {
+        // ✅ FIX: Sirf tab initRealtime karo jab user logged in ho
+        if (typeof supabaseClient !== 'undefined' && window.currentUser) initRealtime();
+    }, 1500);
+});
+// ─────────────────────────────────────────────────────────────────────────────
 // Reload par automatically check karne ke liye
 window.addEventListener("load", () => {
     setTimeout(handle18Mode, 500); // 0.5 second baad check karega taki data load ho jaye
@@ -3256,6 +3605,14 @@ function logoutUser() {
     if(confirm("Do you want to Logout?")) {
         auditLog('LOGOUT', 'User logged out');
         securityClearTimer();
+
+        // --- REALTIME: Release any locks and leave channel ---
+        if (selectedRowElement && typeof unlockRow === 'function') unlockRow(selectedRowElement.dataset.id);
+        if (presenceChannel) {
+            presenceChannel.untrack();
+            supabaseClient.removeChannel(presenceChannel);
+            presenceChannel = null;
+        }
 
         const loginOverlay = document.getElementById('loginOverlay');
         if (loginOverlay) loginOverlay.style.display = 'flex';
@@ -3547,166 +3904,6 @@ function showAnalytics() {
     const rows = window.fullData || [];
     if (rows.length === 0) { myAlert("⚠️ Data load nahi hua hai abhi!"); return; }
 
-    // ---- 1. RETIREMENT CALENDAR (next 12 months) ----
-    const today = new Date();
-    const next12 = new Date(today.getFullYear(), today.getMonth() + 12, today.getDate());
-
-    // Month buckets
-    const monthBuckets = {};
-    for (let i = 0; i < 12; i++) {
-        const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
-        const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-        monthBuckets[key] = [];
-    }
-
-    rows.forEach(row => {
-        const dobRaw = row.field7 || "";
-        if (!dobRaw || dobRaw === "NIL" || dobRaw === "") return;
-
-        let dob = null;
-        const parts = dobRaw.split('-');
-        if (parts.length === 3) {
-            if (parts[0].length === 4) dob = new Date(parts[0], parts[1] - 1, parts[2]);
-            else dob = new Date(parts[2], parts[1] - 1, parts[0]);
-        }
-        if (!dob || isNaN(dob)) return;
-
-        // Retirement = last date of birth month + 62 years
-        const retDate = new Date(dob.getFullYear() + 62, dob.getMonth() + 1, 0);
-
-        if (retDate >= today && retDate <= next12) {
-            const key = retDate.getFullYear() + '-' + String(retDate.getMonth() + 1).padStart(2, '0');
-            if (monthBuckets[key] !== undefined) {
-                monthBuckets[key].push({
-                    name: row.field4 || "—",
-                    district: row.field22 || "—",
-                    dob: dobRaw,
-                    retDate: retDate.toLocaleDateString('en-IN')
-                });
-            }
-        }
-    });
-
-    // Max count for bar scale
-    const maxCount = Math.max(1, ...Object.values(monthBuckets).map(a => a.length));
-    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-    let retHTML = '';
-    Object.entries(monthBuckets).forEach(([key, people]) => {
-        const [yr, mo] = key.split('-');
-        const label = monthNames[parseInt(mo) - 1] + ' ' + yr;
-        const count = people.length;
-        const barW = count === 0 ? 0 : Math.max(4, Math.round((count / maxCount) * 100));
-        const barColor = count === 0 ? '#e0e0e0' : count >= 5 ? '#c62828' : count >= 3 ? '#f57c00' : '#2e7d32';
-
-        // Detail rows (first 3 only, +N more)
-        let detailHtml = '';
-        if (count > 0) {
-            people.slice(0, 3).forEach(p => {
-                detailHtml += `<div style="font-size:10px;color:#555;padding:1px 0;border-bottom:1px dashed #eee;">
-                    👤 ${p.name} &nbsp;|&nbsp; 📍 ${p.district} &nbsp;|&nbsp; 🗓️ ${p.retDate}
-                </div>`;
-            });
-            if (people.length > 3) detailHtml += `<div style="font-size:10px;color:#888;">+${people.length - 3} more...</div>`;
-        }
-
-        retHTML += `
-        <div style="margin-bottom:10px;">
-            <div style="display:flex;align-items:center;gap:8px;">
-                <div style="width:70px;font-size:11px;font-weight:bold;color:#333;flex-shrink:0;">${label}</div>
-                <div style="flex:1;background:#f0f0f0;border-radius:4px;overflow:hidden;height:22px;position:relative;">
-                    <div style="width:${barW}%;background:${barColor};height:100%;border-radius:4px;transition:width 0.6s ease;"></div>
-                    <span style="position:absolute;left:8px;top:3px;font-size:11px;font-weight:bold;color:${count===0?'#aaa':'white'};">${count} retiring</span>
-                </div>
-            </div>
-            ${count > 0 ? `<div style="margin-left:78px;margin-top:3px;">${detailHtml}</div>` : ''}
-        </div>`;
-    });
-
-    // ---- 2. CATEGORY CHART (SC/ST/OBC/UR) per JD Division ----
-    const jdStructure = {
-        'BHOPAL':       ['BHOPAL','RAISEN','RAJGARH','SEHORE','VIDISHA'],
-        'GWALIOR':      ['ASHOKNAGAR','BHIND','DATIA','GUNA','GWALIOR','MORENA','SHEOPUR','SHIVPURI'],
-        'INDORE':       ['ALIRAJPUR','BADWANI','BARWANI','BURHANPUR','DHAR','INDORE','JHABUA','KHANDWA','KHARGONE'],
-        'JABALPUR':     ['BALAGHAT','CHHINDWARA','JABALPUR','KATNI','MANDLA','NARSINGHPUR','SEONI','DINDORI','PANDHURNA'],
-        'UJJAIN':       ['AGAR MALWA','DEWAS','MANDSAUR','NEEMUCH','RATLAM','SHAJAPUR','UJJAIN'],
-        'SAGAR':        ['CHHATARPUR','DAMOH','PANNA','SAGAR','TIKAMGARH','NIWARI'],
-        'REWA':         ['REWA','SATNA','SIDHI','SINGRAULI','MAUGANJ','MAIHAR'],
-        'NARMADAPURAM': ['BETUL','HARDA','NARMADAPURAM'],
-        'SHAHDOL':      ['ANUPPUR','SHAHDOL','UMARIA']
-    };
-
-    const catColors = { SC: '#e53935', ST: '#f57c00', OBC: '#1565c0', UR: '#2e7d32' };
-    const cats = ['SC','ST','OBC','UR'];
-
-    // Build per-JD category counts
-    const jdCatData = {};
-    Object.keys(jdStructure).forEach(jd => {
-        jdCatData[jd] = { SC:0, ST:0, OBC:0, UR:0, total:0 };
-    });
-
-    rows.forEach(row => {
-        if ((row.field28||'').toUpperCase().includes('DELETE')) return;
-        const dist = (row.field22 || '').toUpperCase().trim()
-            .replace(/^DEO\s*/,'').replace(/^JD\s*/,'').trim();
-        const cat = (row.field5 || '').toUpperCase().trim();
-        if (!cats.includes(cat)) return;
-
-        for (const [jd, districts] of Object.entries(jdStructure)) {
-            if (districts.some(d => dist === d || dist.includes(d) || d.includes(dist))) {
-                jdCatData[jd][cat]++;
-                jdCatData[jd].total++;
-                break;
-            }
-        }
-    });
-
-    // Overall totals
-    const overall = { SC:0, ST:0, OBC:0, UR:0, total:0 };
-    Object.values(jdCatData).forEach(d => {
-        cats.forEach(c => { overall[c] += d[c]; overall.total += d[c]; });
-    });
-    // fix double count
-    overall.total = overall.SC + overall.ST + overall.OBC + overall.UR;
-
-    // Build stacked bar HTML
-    let catHTML = '';
-
-    // Overall row first
-    const buildBar = (data) => {
-        if (data.total === 0) return cats.map(c => `<span style="font-size:10px;color:#aaa;">No data</span>`).join('');
-        return cats.map(c => {
-            const pct = ((data[c] / data.total) * 100).toFixed(1);
-            if (data[c] === 0) return '';
-            return `<div title="${c}: ${data[c]} (${pct}%)" style="width:${pct}%;background:${catColors[c]};height:100%;display:inline-block;"></div>`;
-        }).join('');
-    };
-
-    const buildLegend = (data) => cats.map(c =>
-        `<span style="font-size:10px;margin-right:8px;">
-            <span style="display:inline-block;width:10px;height:10px;background:${catColors[c]};border-radius:2px;margin-right:2px;"></span>
-            ${c}: <b>${data[c]}</b>
-        </span>`
-    ).join('');
-
-    catHTML += `
-    <div style="margin-bottom:12px;padding:8px;background:#fff8e1;border-left:4px solid #f57c00;border-radius:4px;">
-        <div style="font-size:12px;font-weight:bold;color:#333;margin-bottom:4px;">🌐 Overall — Total: ${overall.total}</div>
-        <div style="height:20px;border-radius:4px;overflow:hidden;background:#eee;display:flex;">${buildBar(overall)}</div>
-        <div style="margin-top:4px;">${buildLegend(overall)}</div>
-    </div>`;
-
-    Object.entries(jdCatData).forEach(([jd, data]) => {
-        if (data.total === 0) return;
-        catHTML += `
-        <div style="margin-bottom:10px;">
-            <div style="font-size:11px;font-weight:bold;color:#0d47a1;margin-bottom:3px;">JD ${jd} — ${data.total} records</div>
-            <div style="height:18px;border-radius:4px;overflow:hidden;background:#eee;display:flex;">${buildBar(data)}</div>
-            <div style="margin-top:3px;">${buildLegend(data)}</div>
-        </div>`;
-    });
-
-    // ---- 3. BUILD MODAL ----
     if (document.getElementById('analyticsModal')) document.getElementById('analyticsModal').remove();
 
     const modal = document.createElement('div');
@@ -3714,60 +3911,449 @@ function showAnalytics() {
     modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);z-index:10001;display:flex;align-items:center;justify-content:center;';
 
     modal.innerHTML = `
-    <div style="background:white;border-radius:10px;width:92%;max-width:900px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 15px 40px rgba(0,0,0,0.4);">
+    <div style="background:#f8f9fa;border-radius:12px;width:96%;max-width:1100px;max-height:93vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
 
         <!-- Header -->
-        <div style="background:linear-gradient(90deg,#e65100,#bf360c);color:white;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
-            <h3 style="margin:0;font-size:16px;">📊 Analytics Dashboard</h3>
-            <button onclick="document.getElementById('analyticsModal').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;font-weight:bold;">✕</button>
+        <div style="background:linear-gradient(135deg,#1a237e,#283593);color:white;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+            <div>
+                <div style="font-size:17px;font-weight:700;letter-spacing:0.3px;">📊 DPI Live Dashboard</div>
+                <div style="font-size:11px;opacity:0.75;margin-top:2px;">MS Gradation ERP — Real-time Analytics</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span id="dashLiveIndicator" style="font-size:11px;background:rgba(76,175,80,0.3);border:1px solid rgba(76,175,80,0.6);padding:3px 10px;border-radius:20px;">🟢 Live</span>
+                <button onclick="document.getElementById('analyticsModal').remove()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;font-weight:bold;">✕</button>
+            </div>
         </div>
 
-        <!-- Tab Buttons -->
-        <div style="display:flex;border-bottom:2px solid #eee;flex-shrink:0;">
-            <button id="tabBtn1" onclick="switchTab(1)" style="flex:1;padding:10px;border:none;background:#e65100;color:white;font-weight:bold;font-size:13px;cursor:pointer;">📅 Retirement Calendar</button>
-            <button id="tabBtn2" onclick="switchTab(2)" style="flex:1;padding:10px;border:none;background:#f5f5f5;color:#555;font-weight:bold;font-size:13px;cursor:pointer;">🎨 Category Breakdown</button>
+        <!-- KPI Strip -->
+        <div id="kpiStrip" style="display:flex;gap:0;border-bottom:1px solid #ddd;flex-shrink:0;background:white;"></div>
+
+        <!-- Tab Bar -->
+        <div style="display:flex;border-bottom:2px solid #e0e0e0;flex-shrink:0;background:white;">
+            <button class="dashTab" id="dashTab1" onclick="switchDashTab(1)" style="flex:1;padding:11px 6px;border:none;background:#1a237e;color:white;font-weight:600;font-size:12px;cursor:pointer;border-radius:0;">📊 District Chart</button>
+            <button class="dashTab" id="dashTab2" onclick="switchDashTab(2)" style="flex:1;padding:11px 6px;border:none;background:#f5f5f5;color:#555;font-weight:600;font-size:12px;cursor:pointer;border-radius:0;">🥧 Category Split</button>
+            <button class="dashTab" id="dashTab3" onclick="switchDashTab(3)" style="flex:1;padding:11px 6px;border:none;background:#f5f5f5;color:#555;font-weight:600;font-size:12px;cursor:pointer;border-radius:0;">📈 Monthly Trend</button>
+            <button class="dashTab" id="dashTab4" onclick="switchDashTab(4)" style="flex:1;padding:11px 6px;border:none;background:#f5f5f5;color:#555;font-weight:600;font-size:12px;cursor:pointer;border-radius:0;">📅 Retirement</button>
         </div>
 
-        <!-- Tab Content -->
-        <div style="overflow-y:auto;flex:1;padding:16px;">
+        <!-- Content Area -->
+        <div style="overflow-y:auto;flex:1;padding:16px;background:#f8f9fa;">
 
-            <!-- TAB 1: Retirement -->
-            <div id="analyticsTab1">
-                <div style="background:#e3f2fd;padding:8px 12px;border-radius:6px;margin-bottom:12px;font-size:12px;color:#1565c0;font-weight:600;">
-                    📅 अगले 12 महीनों में सेवानिवृत्त होने वाले शिक्षक (62 वर्ष की आयु पर)
+            <!-- TAB 1: District Bar Chart -->
+            <div id="dashPane1">
+                <div style="background:white;border-radius:8px;padding:16px;border:1px solid #e0e0e0;">
+                    <div style="font-size:13px;font-weight:700;color:#1a237e;margin-bottom:4px;">District-wise Record Count</div>
+                    <div style="font-size:11px;color:#888;margin-bottom:14px;">Deleted records excluded — sorted by count</div>
+                    <div style="position:relative;height:420px;"><canvas id="districtBarChart"></canvas></div>
                 </div>
-                ${retHTML || '<div style="text-align:center;color:#aaa;padding:30px;">कोई रिकॉर्ड नहीं मिला</div>'}
             </div>
 
-            <!-- TAB 2: Category -->
-            <div id="analyticsTab2" style="display:none;">
-                <div style="background:#fff3e0;padding:8px 12px;border-radius:6px;margin-bottom:12px;font-size:12px;color:#e65100;font-weight:600;">
-                    🎨 SC / ST / OBC / UR — Division-wise Category Breakdown
+            <!-- TAB 2: Category Pie -->
+            <div id="dashPane2" style="display:none;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div style="background:white;border-radius:8px;padding:16px;border:1px solid #e0e0e0;">
+                        <div style="font-size:13px;font-weight:700;color:#1a237e;margin-bottom:14px;">Overall Category Split</div>
+                        <div style="position:relative;height:280px;"><canvas id="catPieChart"></canvas></div>
+                    </div>
+                    <div style="background:white;border-radius:8px;padding:16px;border:1px solid #e0e0e0;">
+                        <div style="font-size:13px;font-weight:700;color:#1a237e;margin-bottom:14px;">Gender Split</div>
+                        <div style="position:relative;height:280px;"><canvas id="genderPieChart"></canvas></div>
+                    </div>
+                    <div style="background:white;border-radius:8px;padding:16px;border:1px solid #e0e0e0;grid-column:1/-1;">
+                        <div style="font-size:13px;font-weight:700;color:#1a237e;margin-bottom:4px;">Division-wise Category Breakdown</div>
+                        <div style="font-size:11px;color:#888;margin-bottom:14px;">SC / ST / OBC / UR per JD Division</div>
+                        <div style="position:relative;height:260px;"><canvas id="divCatChart"></canvas></div>
+                    </div>
                 </div>
-                ${catHTML || '<div style="text-align:center;color:#aaa;padding:30px;">कोई रिकॉर्ड नहीं मिला</div>'}
+            </div>
+
+            <!-- TAB 3: Monthly Trend -->
+            <div id="dashPane3" style="display:none;">
+                <div style="background:white;border-radius:8px;padding:16px;border:1px solid #e0e0e0;">
+                    <div style="font-size:13px;font-weight:700;color:#1a237e;margin-bottom:4px;">Monthly Activity Trend</div>
+                    <div style="font-size:11px;color:#888;margin-bottom:14px;">New entries, updates aur deletions — last 12 months</div>
+                    <div style="position:relative;height:350px;"><canvas id="trendLineChart"></canvas></div>
+                </div>
+                <div id="trendNote" style="background:white;border-radius:8px;padding:14px;border:1px solid #e0e0e0;margin-top:14px;font-size:12px;color:#555;"></div>
+            </div>
+
+            <!-- TAB 4: Retirement Calendar -->
+            <div id="dashPane4" style="display:none;">
+                <div style="background:white;border-radius:8px;padding:16px;border:1px solid #e0e0e0;margin-bottom:14px;">
+                    <div style="font-size:13px;font-weight:700;color:#1a237e;margin-bottom:4px;">Retirement Timeline — Next 12 Months</div>
+                    <div style="font-size:11px;color:#888;margin-bottom:14px;">62 saal ki umra par retirement — month-wise breakdown</div>
+                    <div style="position:relative;height:260px;"><canvas id="retBarChart"></canvas></div>
+                </div>
+                <div id="retDetailList" style="background:white;border-radius:8px;padding:14px;border:1px solid #e0e0e0;"></div>
             </div>
 
         </div>
 
         <!-- Footer -->
-        <div style="padding:10px 16px;background:#f5f5f5;border-top:1px solid #eee;text-align:right;flex-shrink:0;">
-            <button onclick="window.print()" style="background:#2e7d32;color:white;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:12px;margin-right:8px;">🖨️ Print</button>
-            <button onclick="document.getElementById('analyticsModal').remove()" style="background:#c62828;color:white;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:12px;">✖ Close</button>
+        <div style="padding:10px 16px;background:white;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+            <span style="font-size:11px;color:#aaa;">Data: window.fullData — ${rows.length} total records</span>
+            <div>
+                <button onclick="document.getElementById('analyticsModal').remove()" style="background:#c62828;color:white;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">✖ Close</button>
+            </div>
         </div>
 
     </div>`;
 
     document.body.appendChild(modal);
     modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+    // ── Load Chart.js then build all charts ──
+    function buildDashboard() {
+        _buildKPI(rows);
+        _buildDistrictBar(rows);
+        _buildCategoryPie(rows);
+        _buildTrendLine(rows);
+        _buildRetirement(rows);
+    }
+
+    if (window.Chart) {
+        buildDashboard();
+    } else {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+        s.onload = buildDashboard;
+        document.head.appendChild(s);
+    }
+}
+
+// ── KPI Strip ────────────────────────────────────────────────────────────────
+function _buildKPI(rows) {
+    const active   = rows.filter(r => !(r.field28||'').toUpperCase().includes('DELETE'));
+    const newE     = rows.filter(r => (r.field28||'').toUpperCase().includes('NEW'));
+    const updated  = rows.filter(r => (r.field28||'').toUpperCase().includes('UPDATED'));
+    const deleted  = rows.filter(r => (r.field28||'').toUpperCase().includes('DELETE'));
+
+    // Retirements this month
+    const today = new Date();
+    const retThisMonth = rows.filter(r => {
+        const raw = r.field7 || '';
+        if (!raw || raw === 'NIL') return false;
+        const p = raw.split('-');
+        let dob = null;
+        if (p.length === 3) dob = p[0].length === 4 ? new Date(p[0], p[1]-1, p[2]) : new Date(p[2], p[1]-1, p[0]);
+        if (!dob || isNaN(dob)) return false;
+        const ret = new Date(dob.getFullYear()+62, dob.getMonth()+1, 0);
+        return ret.getFullYear() === today.getFullYear() && ret.getMonth() === today.getMonth();
+    });
+
+    const kpis = [
+        { label: 'Total Active', val: active.length, color: '#1565c0', bg: '#e3f2fd' },
+        { label: 'New Entries',  val: newE.length,   color: '#2e7d32', bg: '#e8f5e9' },
+        { label: 'Updated',      val: updated.length, color: '#e65100', bg: '#fff3e0' },
+        { label: 'Deleted',      val: deleted.length, color: '#c62828', bg: '#ffebee' },
+        { label: 'Retiring This Month', val: retThisMonth.length, color: '#6a1b9a', bg: '#f3e5f5' },
+    ];
+
+    const strip = document.getElementById('kpiStrip');
+    if (!strip) return;
+    strip.innerHTML = kpis.map(k => `
+        <div style="flex:1;padding:12px 10px;text-align:center;border-right:1px solid #eee;background:${k.bg};">
+            <div style="font-size:22px;font-weight:700;color:${k.color};">${k.val}</div>
+            <div style="font-size:10px;color:#777;margin-top:2px;">${k.label}</div>
+        </div>`).join('');
+}
+
+// ── District Bar Chart ────────────────────────────────────────────────────────
+function _buildDistrictBar(rows) {
+    const distCount = {};
+    rows.forEach(r => {
+        if ((r.field28||'').toUpperCase().includes('DELETE')) return;
+        let d = (r.field22||'').toUpperCase().trim().replace(/^DEO\s*/,'').replace(/^JD\s*/,'').trim();
+        if (!d || d.length < 2) return;
+        distCount[d] = (distCount[d] || 0) + 1;
+    });
+    const sorted = Object.entries(distCount).sort((a,b) => b[1]-a[1]);
+    const labels = sorted.map(x => x[0]);
+    const data   = sorted.map(x => x[1]);
+
+    const colors = data.map((v, i) => {
+        const max = data[0] || 1;
+        const ratio = v / max;
+        const r = Math.round(21  + ratio * (25  - 21));
+        const g = Math.round(101 + ratio * (40  - 101));
+        const b = Math.round(192 + ratio * (78  - 192));
+        return `rgba(${r},${g},${b},0.85)`;
+    });
+
+    const ctx = document.getElementById('districtBarChart');
+    if (!ctx) return;
+    new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Records', data, backgroundColor: colors, borderRadius: 4, borderSkipped: false }] },
+        options: {
+            indexAxis: 'y',
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} records` } }
+            },
+            scales: {
+                x: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } } },
+                y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+}
+
+// ── Category & Gender Pie Charts ──────────────────────────────────────────────
+function _buildCategoryPie(rows) {
+    const active = rows.filter(r => !(r.field28||'').toUpperCase().includes('DELETE'));
+
+    // Category pie
+    const catCount = { SC:0, ST:0, OBC:0, UR:0, Other:0 };
+    active.forEach(r => {
+        const c = (r.field5||'').toUpperCase().trim();
+        if (catCount[c] !== undefined) catCount[c]++;
+        else catCount.Other++;
+    });
+    const catCtx = document.getElementById('catPieChart');
+    if (catCtx) new Chart(catCtx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(catCount).filter(k => catCount[k] > 0),
+            datasets: [{ data: Object.values(catCount).filter(v => v > 0),
+                backgroundColor: ['#e53935','#f57c00','#1565c0','#2e7d32','#9e9e9e'],
+                borderWidth: 2, borderColor: 'white' }]
+        },
+        options: { responsive:true, maintainAspectRatio:false,
+            plugins: { legend: { position:'bottom', labels:{ font:{ size:11 }, padding:10 } },
+                tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed} (${((c.parsed/active.length)*100).toFixed(1)}%)` } }
+            }
+        }
+    });
+
+    // Gender pie
+    const genCount = { Male:0, Female:0, Other:0 };
+    active.forEach(r => {
+        const g = (r.field6||'').toUpperCase().trim();
+        if (g === 'MALE' || g === 'M') genCount.Male++;
+        else if (g === 'FEMALE' || g === 'F') genCount.Female++;
+        else genCount.Other++;
+    });
+    const genCtx = document.getElementById('genderPieChart');
+    if (genCtx) new Chart(genCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Male','Female','Other'].filter(k => genCount[k] > 0),
+            datasets: [{ data: ['Male','Female','Other'].map(k => genCount[k]).filter(v => v > 0),
+                backgroundColor: ['#1565c0','#e91e63','#9e9e9e'],
+                borderWidth: 2, borderColor: 'white' }]
+        },
+        options: { responsive:true, maintainAspectRatio:false,
+            plugins: { legend: { position:'bottom', labels:{ font:{ size:11 }, padding:10 } } }
+        }
+    });
+
+    // Division stacked bar
+    const jdStructure = {
+        'BHOPAL':['BHOPAL','RAISEN','RAJGARH','SEHORE','VIDISHA'],
+        'GWALIOR':['ASHOKNAGAR','BHIND','DATIA','GUNA','GWALIOR','MORENA','SHEOPUR','SHIVPURI'],
+        'INDORE':['ALIRAJPUR','BADWANI','BARWANI','BURHANPUR','DHAR','INDORE','JHABUA','KHANDWA','KHARGONE'],
+        'JABALPUR':['BALAGHAT','CHHINDWARA','JABALPUR','KATNI','MANDLA','NARSINGHPUR','SEONI','DINDORI','PANDHURNA'],
+        'UJJAIN':['AGAR MALWA','DEWAS','MANDSAUR','NEEMUCH','RATLAM','SHAJAPUR','UJJAIN'],
+        'SAGAR':['CHHATARPUR','DAMOH','PANNA','SAGAR','TIKAMGARH','NIWARI'],
+        'REWA':['REWA','SATNA','SIDHI','SINGRAULI','MAUGANJ','MAIHAR'],
+        'NARMADAPURAM':['BETUL','HARDA','NARMADAPURAM'],
+        'SHAHDOL':['ANUPPUR','SHAHDOL','UMARIA']
+    };
+    const cats = ['SC','ST','OBC','UR'];
+    const jdCat = {};
+    Object.keys(jdStructure).forEach(j => { jdCat[j] = {SC:0,ST:0,OBC:0,UR:0}; });
+    active.forEach(r => {
+        const dist = (r.field22||'').toUpperCase().replace(/^DEO\s*/,'').replace(/^JD\s*/,'').trim();
+        const cat  = (r.field5||'').toUpperCase().trim();
+        if (!cats.includes(cat)) return;
+        for (const [j, ds] of Object.entries(jdStructure)) {
+            if (ds.some(d => dist === d || dist.includes(d) || d.includes(dist))) { jdCat[j][cat]++; break; }
+        }
+    });
+    const jdLabels = Object.keys(jdCat);
+    const divCtx = document.getElementById('divCatChart');
+    if (divCtx) new Chart(divCtx, {
+        type: 'bar',
+        data: {
+            labels: jdLabels,
+            datasets: [
+                { label:'SC',  data: jdLabels.map(j=>jdCat[j].SC),  backgroundColor:'#e53935', borderRadius:2 },
+                { label:'ST',  data: jdLabels.map(j=>jdCat[j].ST),  backgroundColor:'#f57c00', borderRadius:2 },
+                { label:'OBC', data: jdLabels.map(j=>jdCat[j].OBC), backgroundColor:'#1565c0', borderRadius:2 },
+                { label:'UR',  data: jdLabels.map(j=>jdCat[j].UR),  backgroundColor:'#2e7d32', borderRadius:2 },
+            ]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins: { legend:{ position:'top', labels:{ font:{ size:11 } } } },
+            scales: {
+                x: { stacked:true, grid:{ display:false }, ticks:{ font:{ size:10 } } },
+                y: { stacked:true, grid:{ color:'#f0f0f0' } }
+            }
+        }
+    });
+}
+
+// ── Monthly Trend Line Chart ──────────────────────────────────────────────────
+function _buildTrendLine(rows) {
+    const today = new Date();
+    const months = [];
+    const monthLabels = [];
+    const mNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        months.push(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'));
+        monthLabels.push(mNames[d.getMonth()] + "'" + String(d.getFullYear()).slice(2));
+    }
+
+    const newData=months.map(()=>0), updData=months.map(()=>0), delData=months.map(()=>0);
+
+    rows.forEach(r => {
+        const trail = (r.field29 || r.auditTrail || '').trim();
+        // trail format: "DISTRICT | DD/MM/YYYY, HH:MM:SS" or similar
+        const dateMatch = trail.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+        if (!dateMatch) return;
+        const [, dd, mm, yyyy] = dateMatch;
+        const key = yyyy + '-' + mm.padStart(2,'0');
+        const idx = months.indexOf(key);
+        if (idx === -1) return;
+        const st = (r.field28||'').toUpperCase();
+        if (st.includes('DELETE')) delData[idx]++;
+        else if (st.includes('NEW')) newData[idx]++;
+        else if (st.includes('UPDATED')) updData[idx]++;
+    });
+
+    const totalThisYear = newData.reduce((a,b)=>a+b,0) + updData.reduce((a,b)=>a+b,0);
+
+    const ctx = document.getElementById('trendLineChart');
+    if (ctx) new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: monthLabels,
+            datasets: [
+                { label:'New Entries', data:newData, borderColor:'#2e7d32', backgroundColor:'rgba(46,125,50,0.08)', tension:0.4, fill:true, pointRadius:4, pointHoverRadius:6 },
+                { label:'Updated',     data:updData, borderColor:'#1565c0', backgroundColor:'rgba(21,101,192,0.08)', tension:0.4, fill:true, pointRadius:4, pointHoverRadius:6 },
+                { label:'Deleted',     data:delData, borderColor:'#c62828', backgroundColor:'rgba(198,40,40,0.06)', tension:0.4, fill:true, pointRadius:4, pointHoverRadius:6 },
+            ]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            interaction: { mode:'index', intersect:false },
+            plugins: { legend:{ position:'top', labels:{ font:{ size:11 } } } },
+            scales: {
+                x: { grid:{ color:'#f0f0f0' }, ticks:{ font:{ size:10 } } },
+                y: { grid:{ color:'#f0f0f0' }, ticks:{ font:{ size:11 }, stepSize:1 } }
+            }
+        }
+    });
+
+    const note = document.getElementById('trendNote');
+    if (note) note.innerHTML = `<b>📌 Note:</b> Trend audit trail field se parse kiya gaya hai (<code>field29</code>). Agar dates wahan store nahi hain to all zeros dikhenge — tab field29 mein timestamp save karna hoga.`;
+}
+
+// ── Retirement Bar Chart + Detail List ───────────────────────────────────────
+function _buildRetirement(rows) {
+    const today = new Date();
+    const mNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const buckets = {}, bucketPeople = {};
+    for (let i = 0; i < 12; i++) {
+        const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+        const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+        buckets[key] = 0;
+        bucketPeople[key] = [];
+    }
+
+    rows.forEach(r => {
+        if ((r.field28||'').toUpperCase().includes('DELETE')) return;
+        const raw = r.field7 || '';
+        if (!raw || raw === 'NIL') return;
+        const p = raw.split('-');
+        let dob = null;
+        if (p.length === 3) dob = p[0].length === 4 ? new Date(p[0], p[1]-1, p[2]) : new Date(p[2], p[1]-1, p[0]);
+        if (!dob || isNaN(dob)) return;
+        const ret = new Date(dob.getFullYear()+62, dob.getMonth()+1, 0);
+        if (ret < today) return;
+        const key = ret.getFullYear() + '-' + String(ret.getMonth()+1).padStart(2,'0');
+        if (buckets[key] !== undefined) {
+            buckets[key]++;
+            bucketPeople[key].push({ name: r.field4||'—', district: (r.field22||'—').replace(/^DEO\s*/i,''), retDate: ret.toLocaleDateString('en-IN') });
+        }
+    });
+
+    const labels = Object.keys(buckets).map(k => { const [y,m]=k.split('-'); return mNames[+m-1]+"'"+y.slice(2); });
+    const data   = Object.values(buckets);
+    const bgColors = data.map(v => v === 0 ? '#e0e0e0' : v >= 5 ? '#c62828' : v >= 3 ? '#f57c00' : '#2e7d32');
+
+    const ctx = document.getElementById('retBarChart');
+    if (ctx) new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label:'Retirements', data, backgroundColor: bgColors, borderRadius:4, borderSkipped:false }] },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins: {
+                legend:{ display:false },
+                tooltip:{ callbacks:{ label: c => ` ${c.parsed.y} retiring` } }
+            },
+            scales: {
+                x: { grid:{ display:false }, ticks:{ font:{ size:10 } } },
+                y: { grid:{ color:'#f0f0f0' }, ticks:{ stepSize:1, font:{ size:11 } } }
+            },
+            onClick: (evt, elements) => {
+                if (!elements.length) return;
+                const key = Object.keys(buckets)[elements[0].index];
+                _showRetDetail(key, bucketPeople[key]);
+            }
+        }
+    });
+
+    // Show first month with data by default
+    const firstKey = Object.keys(bucketPeople).find(k => bucketPeople[k].length > 0) || Object.keys(bucketPeople)[0];
+    _showRetDetail(firstKey, bucketPeople[firstKey]);
+
+    window._retBucketPeople = bucketPeople;
+}
+
+function _showRetDetail(key, people) {
+    const mNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const [yr, mo] = key.split('-');
+    const label = mNames[+mo-1] + ' ' + yr;
+    const el = document.getElementById('retDetailList');
+    if (!el) return;
+    if (!people || people.length === 0) {
+        el.innerHTML = `<div style="color:#aaa;font-size:12px;padding:10px;">📅 ${label} — koi retirement nahi hai</div>`; return;
+    }
+    el.innerHTML = `
+        <div style="font-size:13px;font-weight:700;color:#c62828;margin-bottom:10px;">📅 ${label} — ${people.length} retiring</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;">
+            ${people.map(p => `
+                <div style="background:#fff8f8;border:1px solid #ffcdd2;border-radius:6px;padding:8px 10px;">
+                    <div style="font-size:12px;font-weight:600;color:#333;">👤 ${p.name}</div>
+                    <div style="font-size:11px;color:#666;margin-top:2px;">📍 ${p.district}</div>
+                    <div style="font-size:11px;color:#c62828;margin-top:2px;">🗓️ ${p.retDate}</div>
+                </div>`).join('')}
+        </div>`;
+}
+
+function switchDashTab(num) {
+    [1,2,3,4].forEach(i => {
+        const pane = document.getElementById('dashPane'+i);
+        const btn  = document.getElementById('dashTab'+i);
+        if (!pane || !btn) return;
+        pane.style.display = i === num ? 'block' : 'none';
+        btn.style.background = i === num ? '#1a237e' : '#f5f5f5';
+        btn.style.color      = i === num ? 'white'   : '#555';
+    });
 }
 
 function switchTab(num) {
-    document.getElementById('analyticsTab1').style.display = num === 1 ? 'block' : 'none';
-    document.getElementById('analyticsTab2').style.display = num === 2 ? 'block' : 'none';
-    document.getElementById('tabBtn1').style.background = num === 1 ? '#e65100' : '#f5f5f5';
-    document.getElementById('tabBtn1').style.color      = num === 1 ? 'white'   : '#555';
-    document.getElementById('tabBtn2').style.background = num === 2 ? '#e65100' : '#f5f5f5';
-    document.getElementById('tabBtn2').style.color      = num === 2 ? 'white'   : '#555';
+    [1,2,3,4].forEach(i => {
+        const t = document.getElementById('analyticsTab'+i);
+        const b = document.getElementById('tabBtn'+i);
+        if (t) t.style.display = i===num?'block':'none';
+        if (b) { b.style.background=i===num?'#e65100':'#f5f5f5'; b.style.color=i===num?'white':'#555'; }
+    });
 }
 </script>
 
@@ -4454,6 +5040,8 @@ checkLogin = function() {
         window.currentUser = user;
         securityResetTimer();
         auditLog('LOGIN', 'User logged in');
+        if (typeof loadData === 'function') loadData();
+        if (typeof initRealtime === 'function') initRealtime();
     } else {
         let attempts = parseInt(localStorage.getItem(attemptsKey) || '0') + 1;
         localStorage.setItem(attemptsKey, attempts);
@@ -4802,4 +5390,677 @@ document.addEventListener('DOMContentLoaded', function() {
         logoutBtn.parentNode.insertBefore(cpBtn, logoutBtn.nextSibling);
     }
 });
+</script>
+<script>
+// ══════════════════════════════════════════════════════════════════
+// DPI LIVE DASHBOARD — Chart.js powered
+// ══════════════════════════════════════════════════════════════════
+
+const _DISTRICT_STRUCTURE = [
+    { jd:'JD BHOPAL',       districts:['BHOPAL','RAISEN','RAJGARH','SEHORE','VIDISHA'] },
+    { jd:'JD GWALIOR',      districts:['ASHOKNAGAR','BHIND','DATIA','GUNA','GWALIOR','MORENA','SHEOPUR','SHIVPURI'] },
+    { jd:'JD INDORE',       districts:['ALIRAJPUR','BADWANI','BURHANPUR','DHAR','INDORE','JHABUA','KHANDWA','KHARGONE'] },
+    { jd:'JD JABALPUR',     districts:['BALAGHAT','CHHINDWARA','JABALPUR','KATNI','MANDLA','NARSINGHPUR','SEONI','DINDORI','PANDHURNA'] },
+    { jd:'JD UJJAIN',       districts:['AGAR MALWA','DEWAS','MANDSAUR','NEEMUCH','RATLAM','SHAJAPUR','UJJAIN'] },
+    { jd:'JD SAGAR',        districts:['CHHATARPUR','DAMOH','PANNA','SAGAR','TIKAMGARH','NIWARI'] },
+    { jd:'JD REWA',         districts:['REWA','SATNA','SIDHI','SINGRAULI','MAUGANJ','MAIHAR'] },
+    { jd:'JD NARMADAPURAM', districts:['BETUL','HARDA','NARMADAPURAM'] },
+    { jd:'JD SHAHDOL',      districts:['ANUPPUR','SHAHDOL','UMARIA'] }
+];
+
+let _dashCharts = {};
+
+function _destroyDashCharts() {
+    Object.values(_dashCharts).forEach(c => { try { c.destroy(); } catch(e){} });
+    _dashCharts = {};
+}
+
+function _getDistrictName(row) {
+    let v = (row.field22 || '').toUpperCase().trim();
+    if (/^\d{8,}/.test(v) || v.includes('ODS')) v = (row.field23 || '').toUpperCase().trim();
+    return v.replace(/^DEO\s+/,'').replace(/^JD\s+/,'').trim();
+}
+
+function _computeDashData() {
+    const rows = (window.fullData || []).filter(r => (r.field28||'').toUpperCase() !== 'DELETED');
+    const today = new Date();
+
+    // 1. District-wise counts
+    const distCount = {};
+    _DISTRICT_STRUCTURE.forEach(j => j.districts.forEach(d => { distCount[d] = 0; }));
+    rows.forEach(r => { const d = _getDistrictName(r); if (distCount[d] !== undefined) distCount[d]++; });
+
+    // 2. Category split (field5)
+    const catCount = {};
+    rows.forEach(r => {
+        const c = (r.field5 || 'UNKNOWN').trim().toUpperCase() || 'UNKNOWN';
+        catCount[c] = (catCount[c] || 0) + 1;
+    });
+
+    // 3. Monthly trend — field29 has "DISTRICT | DD-MM-YYYY HH:MM" or timestamps
+    const monthlyNew = {}, monthlyUpd = {};
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    // last 6 months
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        months.push({ label: monthNames[d.getMonth()] + ' ' + d.getFullYear().toString().slice(2), year: d.getFullYear(), month: d.getMonth() });
+        monthlyNew[i] = 0; monthlyUpd[i] = 0;
+    }
+    rows.forEach(r => {
+        const status = (r.field28 || '').toUpperCase();
+        const trail = r.field29 || '';
+        // Try to extract date from audit trail "DISTRICT | 15-03-2025 10:30"
+        const dateMatch = trail.match(/(\d{2})-(\d{2})-(\d{4})/);
+        if (!dateMatch) return;
+        const rDate = new Date(parseInt(dateMatch[3]), parseInt(dateMatch[2])-1, parseInt(dateMatch[1]));
+        months.forEach((m, idx) => {
+            if (rDate.getFullYear() === m.year && rDate.getMonth() === m.month) {
+                if (status.includes('NEW')) monthlyNew[5 - idx < 0 ? 0 : 5-idx]++;
+                else if (status.includes('UPD')) monthlyUpd[5 - idx < 0 ? 0 : 5-idx]++;
+            }
+        });
+    });
+
+    // 4. Retirement in next 90 days (field7 = DOB DD-MM-YYYY or YYYY-MM-DD)
+    const retiringSoon = [];
+    rows.forEach(r => {
+        const dob = r.field7 || '';
+        let birthDate = null;
+        if (/^\d{2}-\d{2}-\d{4}$/.test(dob)) {
+            const p = dob.split('-');
+            birthDate = new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
+        } else if (/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+            birthDate = new Date(dob);
+        }
+        if (!birthDate || isNaN(birthDate)) return;
+        // Retirement = 60 years from DOB
+        const retDate = new Date(birthDate.getFullYear()+60, birthDate.getMonth(), birthDate.getDate());
+        const daysLeft = Math.floor((retDate - today) / 86400000);
+        if (daysLeft >= 0 && daysLeft <= 90) {
+            retiringSoon.push({
+                name: r.field4 || '—',
+                district: _getDistrictName(r),
+                dob: dob,
+                retDate: retDate.toLocaleDateString('en-IN'),
+                daysLeft: daysLeft
+            });
+        }
+    });
+    retiringSoon.sort((a,b) => a.daysLeft - b.daysLeft);
+
+    return { distCount, catCount, months, monthlyNew, monthlyUpd, retiringSoon, total: rows.length };
+}
+
+function openLiveDashboard() {
+    if (!window.fullData || window.fullData.length === 0) {
+        myAlert('Data load nahi hua abhi. Thodi der baad try karein.'); return;
+    }
+
+    _destroyDashCharts();
+    const existing = document.getElementById('liveDashModal');
+    if (existing) existing.remove();
+
+    const D = _computeDashData();
+
+    // Sort districts by count for bar chart
+    const sortedDist = Object.entries(D.distCount).sort((a,b) => b[1]-a[1]);
+    const barLabels = sortedDist.map(e => e[0]);
+    const barData   = sortedDist.map(e => e[1]);
+
+    const catLabels = Object.keys(D.catCount);
+    const catData   = Object.values(D.catCount);
+    const PIE_COLORS = ['#6a1b9a','#1565c0','#2e7d32','#e65100','#b71c1c','#00695c','#4527a0','#558b2f'];
+
+    const trendLabels = D.months.map(m => m.label);
+    const trendNew  = D.months.map((m,i) => D.monthlyNew[i] || 0);
+    const trendUpd  = D.months.map((m,i) => D.monthlyUpd[i] || 0);
+
+    // Retirement calendar rows
+    const retRows = D.retiringSoon.length === 0
+        ? '<tr><td colspan="5" style="text-align:center;padding:16px;color:#888;font-style:italic;">Agle 90 din mein koi retirement nahi</td></tr>'
+        : D.retiringSoon.slice(0,20).map(r => {
+            const urgency = r.daysLeft <= 30 ? '#ffebee' : r.daysLeft <= 60 ? '#fff8e1' : '#e8f5e9';
+            const badge   = r.daysLeft <= 30 ? '#c62828' : r.daysLeft <= 60 ? '#e65100' : '#2e7d32';
+            return `<tr style="background:${urgency};border-bottom:1px solid #eee;">
+                <td style="padding:7px 10px;font-weight:600;font-size:12px;">${r.name}</td>
+                <td style="padding:7px 10px;font-size:12px;">${r.district}</td>
+                <td style="padding:7px 10px;font-size:12px;">${r.dob}</td>
+                <td style="padding:7px 10px;font-size:12px;">${r.retDate}</td>
+                <td style="padding:7px 10px;text-align:center;">
+                    <span style="background:${badge};color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:bold;">${r.daysLeft}d</span>
+                </td>
+            </tr>`;
+        }).join('');
+
+    const modal = document.createElement('div');
+    modal.id = 'liveDashModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10001;overflow-y:auto;';
+
+    modal.innerHTML = `
+    <div style="max-width:1100px;margin:20px auto;background:#f4f6fa;border-radius:10px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#4a148c,#6a1b9a);color:white;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <div style="font-size:18px;font-weight:700;letter-spacing:.5px;">📊 DPI Live Dashboard</div>
+                <div style="font-size:12px;opacity:.8;margin-top:2px;">Real-time data from Supabase • ${new Date().toLocaleString('en-IN')}</div>
+            </div>
+            <button onclick="closeLiveDashboard()" style="background:rgba(255,255,255,.2);border:none;color:white;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;font-weight:bold;">✕</button>
+        </div>
+
+        <!-- KPI Cards -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:20px 24px 8px;">
+            <div style="background:white;border-radius:8px;padding:14px 16px;border-left:4px solid #6a1b9a;">
+                <div style="font-size:11px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">कुल Records</div>
+                <div style="font-size:28px;font-weight:700;color:#4a148c;margin-top:4px;">${D.total.toLocaleString('en-IN')}</div>
+            </div>
+            <div style="background:white;border-radius:8px;padding:14px 16px;border-left:4px solid #1565c0;">
+                <div style="font-size:11px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Districts Active</div>
+                <div style="font-size:28px;font-weight:700;color:#1565c0;margin-top:4px;">${Object.values(D.distCount).filter(v=>v>0).length}</div>
+            </div>
+            <div style="background:white;border-radius:8px;padding:14px 16px;border-left:4px solid #e65100;">
+                <div style="font-size:11px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Retiring (90 days)</div>
+                <div style="font-size:28px;font-weight:700;color:#e65100;margin-top:4px;">${D.retiringSoon.length}</div>
+            </div>
+            <div style="background:white;border-radius:8px;padding:14px 16px;border-left:4px solid #2e7d32;">
+                <div style="font-size:11px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Categories</div>
+                <div style="font-size:28px;font-weight:700;color:#2e7d32;margin-top:4px;">${catLabels.length}</div>
+            </div>
+        </div>
+
+        <!-- Charts Row 1: Bar + Pie -->
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;padding:8px 24px;">
+
+            <div style="background:white;border-radius:8px;padding:16px;">
+                <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px;">📍 District-wise Records (Top 55)</div>
+                <div style="overflow-x:auto;">
+                    <div style="min-width:900px;height:260px;">
+                        <canvas id="dashBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background:white;border-radius:8px;padding:16px;">
+                <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px;">🎯 Category Split</div>
+                <div style="height:220px;display:flex;align-items:center;justify-content:center;">
+                    <canvas id="dashPieChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 2: Line trend -->
+        <div style="padding:8px 24px;">
+            <div style="background:white;border-radius:8px;padding:16px;">
+                <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px;">📈 Monthly Activity Trend (Last 6 Months)</div>
+                <div style="height:200px;">
+                    <canvas id="dashLineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Retirement Calendar -->
+        <div style="padding:8px 24px 24px;">
+            <div style="background:white;border-radius:8px;padding:16px;">
+                <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:4px;">⚠️ Upcoming Retirements — Next 90 Days</div>
+                <div style="font-size:11px;color:#888;margin-bottom:12px;">
+                    <span style="background:#ffebee;padding:2px 8px;border-radius:4px;color:#c62828;font-weight:600;margin-right:6px;">● ≤ 30 days</span>
+                    <span style="background:#fff8e1;padding:2px 8px;border-radius:4px;color:#e65100;font-weight:600;margin-right:6px;">● ≤ 60 days</span>
+                    <span style="background:#e8f5e9;padding:2px 8px;border-radius:4px;color:#2e7d32;font-weight:600;">● ≤ 90 days</span>
+                </div>
+                <div style="overflow-y:auto;max-height:260px;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:#f5f5f5;position:sticky;top:0;">
+                                <th style="padding:8px 10px;text-align:left;font-size:11px;color:#555;border-bottom:2px solid #eee;">Name</th>
+                                <th style="padding:8px 10px;text-align:left;font-size:11px;color:#555;border-bottom:2px solid #eee;">District</th>
+                                <th style="padding:8px 10px;text-align:left;font-size:11px;color:#555;border-bottom:2px solid #eee;">DOB</th>
+                                <th style="padding:8px 10px;text-align:left;font-size:11px;color:#555;border-bottom:2px solid #eee;">Retirement Date</th>
+                                <th style="padding:8px 10px;text-align:center;font-size:11px;color:#555;border-bottom:2px solid #eee;">Days Left</th>
+                            </tr>
+                        </thead>
+                        <tbody>${retRows}</tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>`;
+
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeLiveDashboard(); });
+
+    // Draw Charts after DOM is ready
+    requestAnimationFrame(() => {
+        // ── Bar Chart ──
+        const barCtx = document.getElementById('dashBarChart')?.getContext('2d');
+        if (barCtx) {
+            _dashCharts.bar = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: barLabels,
+                    datasets: [{
+                        label: 'Records',
+                        data: barData,
+                        backgroundColor: barLabels.map((_, i) => {
+                            const jdColors = ['#6a1b9a','#1565c0','#2e7d32','#e65100','#b71c1c','#00695c','#4527a0','#558b2f','#0277bd'];
+                            // assign color by JD
+                            for (let ji = 0; ji < _DISTRICT_STRUCTURE.length; ji++) {
+                                if (_DISTRICT_STRUCTURE[ji].districts.includes(barLabels[i])) return jdColors[ji] + 'cc';
+                            }
+                            return '#9e9e9ecc';
+                        }),
+                        borderRadius: 4,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' Records: ' + ctx.parsed.y } } },
+                    scales: {
+                        x: { ticks: { font: { size: 9 }, maxRotation: 75, minRotation: 45 }, grid: { display: false } },
+                        y: { beginAtZero: true, ticks: { font: { size: 10 } }, grid: { color: '#f0f0f0' } }
+                    }
+                }
+            });
+        }
+
+        // ── Pie Chart ──
+        const pieCtx = document.getElementById('dashPieChart')?.getContext('2d');
+        if (pieCtx) {
+            _dashCharts.pie = new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels,
+                    datasets: [{ data: catData, backgroundColor: PIE_COLORS.slice(0, catLabels.length), borderWidth: 2, borderColor: '#fff' }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12, padding: 8 } },
+                        tooltip: { callbacks: { label: ctx => ' ' + ctx.label + ': ' + ctx.parsed + ' (' + Math.round(ctx.parsed / catData.reduce((a,b)=>a+b,0) * 100) + '%)' } }
+                    }
+                }
+            });
+        }
+
+        // ── Line Chart ──
+        const lineCtx = document.getElementById('dashLineChart')?.getContext('2d');
+        if (lineCtx) {
+            _dashCharts.line = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: trendLabels,
+                    datasets: [
+                        { label: 'New Entries', data: trendNew, borderColor: '#1565c0', backgroundColor: '#1565c022', fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#1565c0' },
+                        { label: 'Updated',     data: trendUpd, borderColor: '#2e7d32', backgroundColor: '#2e7d3222', fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#2e7d32' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 14 } } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                        y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+    });
+}
+
+function closeLiveDashboard() {
+    _destroyDashCharts();
+    const m = document.getElementById('liveDashModal');
+    if (m) m.remove();
+}
+</script>
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// DISTRICT COMPLETION TRACKER — DPI View
+// Progress bars + Leaderboard + Last Activity per DEO
+// ══════════════════════════════════════════════════════════════════════════════
+
+function _computeTrackerData() {
+    const rows = window.fullData || [];
+    const today = new Date();
+
+    // All 55 DEO districts mapped by district name → loginId
+    const DEO_MAP = {
+        'AGARMALWA':'DEOAGARMALWA','ALIRAJPUR':'DEOALIRAJPUR','ANUPPUR':'DEOANUPPUR',
+        'ASHOKNAGAR':'DEOASHOKNAGAR','BALAGHAT':'DEOBALAGHAT','BARWANI':'DEOBARWANI',
+        'BADWANI':'DEOBARWANI','BETUL':'DEOBETUL','BHIND':'DEOBHIND','BHOPAL':'DEOBHOPAL',
+        'BURHANPUR':'DEOBURHANPUR','CHHATARPUR':'DEOCHHATARPUR','CHHINDWARA':'DEOCHHINDWARA',
+        'DAMOH':'DEODAMOH','DATIA':'DEODATIA','DEWAS':'DEODEWAS','DHAR':'DEODHAR',
+        'DINDORI':'DEODINDORI','GUNA':'DEOGUNA','GWALIOR':'DEOGWALIOR','HARDA':'DEOHARDA',
+        'HOSHANGABAD':'DEOHOSHANGABAD','NARMADAPURAM':'DEONARMADAPURAM',
+        'INDORE':'DEOINDORE','JABALPUR':'DEOJABALPUR','JHABUA':'DEOJHABUA',
+        'KATNI':'DEOKATNI','KHANDWA':'DEOKHANDWA','KHARGONE':'DEOKHARGONE',
+        'MANDLA':'DEOMANDLA','MANDSAUR':'DEOMANDSAUR','MORENA':'DEOMORENA',
+        'NARSINGHPUR':'DEONARSINGHPUR','NEEMUCH':'DEONEEMUCH','NIWARI':'DEONIWARI',
+        'PANNA':'DEOPANNA','RAISEN':'DEORAISEN','RAJGARH':'DEORAJGARH',
+        'RATLAM':'DEORATLAM','REWA':'DEOREWA','SAGAR':'DEOSAGAR','SATNA':'DEOSATNA',
+        'SEHORE':'DEOSEHORE','SEONI':'DEOSEONI','SHAHDOL':'DEOSHAHDOL',
+        'SHAJAPUR':'DEOSHAJAPUR','SHEOPUR':'DEOSHEOPUR','SHIVPURI':'DEOSHIVPURI',
+        'SIDHI':'DEOSIDHI','SINGRAULI':'DEOSINGRAULI','TIKAMGARH':'DEOTIKAMGARH',
+        'UJJAIN':'DEOUJJAIN','UMARIA':'DEOUMARIA','VIDISHA':'DEOVIDISHA',
+        'PANDHURNA':'DEOPANDHURNA','MAIHAR':'DEOMAIHAR','MAUGANJ':'DEOMAUGANJ'
+    };
+
+    // Per-district stats
+    const stats = {};
+    Object.keys(DEO_MAP).forEach(d => {
+        stats[d] = { district: d, loginId: DEO_MAP[d], total: 0, active: 0, updated: 0, newEntry: 0, deleted: 0, lastActivity: null, lastActivityRaw: 0 };
+    });
+
+    rows.forEach(row => {
+        // Resolve district name
+        let rawDistrict = (row.field22 || '').toUpperCase().trim();
+        if (/^\d{8,}/.test(rawDistrict) || rawDistrict.includes('ODS')) {
+            rawDistrict = (row.field23 || '').toUpperCase().trim();
+        }
+        const distName = rawDistrict.replace(/^DEO\s+/,'').replace(/^JD\s+/,'').trim();
+        if (!stats[distName]) return;
+
+        const st = stats[distName];
+        const status = (row.field28 || '').toUpperCase().trim();
+        const trail  = (row.field29 || '').trim();
+
+        st.total++;
+        if (!status.includes('DELETE')) st.active++;
+        if (status.includes('NEW'))     st.newEntry++;
+        if (status.includes('UPD'))     st.updated++;
+        if (status.includes('DELETE'))  st.deleted++;
+
+        // Parse last activity from audit trail: "MANDSAUR | 15/03/2025, 10:30:45 AM"
+        // toLocaleString() format: "15/3/2025, 10:30:45 am" or "3/15/2025..."
+        if (trail) {
+            const pipeParts = trail.split('|');
+            const datePart = pipeParts.length > 1 ? pipeParts[pipeParts.length - 1].trim() : trail;
+
+            // Try parsing various date formats
+            let parsed = null;
+            // Format: DD/MM/YYYY or MM/DD/YYYY from toLocaleString
+            const dmyMatch = datePart.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+            if (dmyMatch) {
+                // Try DD/MM/YYYY first (Indian locale)
+                const attempt = new Date(`${dmyMatch[3]}-${dmyMatch[2].padStart(2,'0')}-${dmyMatch[1].padStart(2,'0')}`);
+                if (!isNaN(attempt)) parsed = attempt;
+            }
+            // Format: DD-MM-YYYY
+            const ddmmMatch = datePart.match(/(\d{2})-(\d{2})-(\d{4})/);
+            if (!parsed && ddmmMatch) {
+                const attempt = new Date(`${ddmmMatch[3]}-${ddmmMatch[2]}-${ddmmMatch[1]}`);
+                if (!isNaN(attempt)) parsed = attempt;
+            }
+
+            if (parsed && !isNaN(parsed)) {
+                const ts = parsed.getTime();
+                if (ts > st.lastActivityRaw) {
+                    st.lastActivityRaw = ts;
+                    st.lastActivity = parsed;
+                }
+            }
+        }
+    });
+
+    // Convert to array, sort by active count desc
+    const arr = Object.values(stats).filter(s => s.total > 0 || true);
+    arr.sort((a, b) => b.active - a.active);
+
+    // Max active for progress bar scaling
+    const maxActive = Math.max(...arr.map(s => s.active), 1);
+
+    // Leaderboard: top 10 by activity score (active + updated*2 + newEntry)
+    const scored = arr.map(s => ({
+        ...s,
+        score: s.active + s.updated * 2 + s.newEntry
+    })).sort((a,b) => b.score - a.score);
+
+    return { arr, maxActive, leaderboard: scored.slice(0, 10), today };
+}
+
+function _timeAgo(date) {
+    if (!date) return '<span style="color:#bbb;font-style:italic;">No activity</span>';
+    const diff = Date.now() - date.getTime();
+    const mins  = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days  = Math.floor(diff / 86400000);
+    if (mins < 2)   return '<span style="color:#2e7d32;font-weight:600;">Just now</span>';
+    if (mins < 60)  return `<span style="color:#2e7d32;font-weight:600;">${mins}m ago</span>`;
+    if (hours < 24) return `<span style="color:#1565c0;font-weight:600;">${hours}h ago</span>`;
+    if (days === 1) return `<span style="color:#e65100;font-weight:600;">Yesterday</span>`;
+    if (days < 7)   return `<span style="color:#e65100;font-weight:600;">${days}d ago</span>`;
+    return `<span style="color:#b71c1c;font-weight:600;">${date.toLocaleDateString('en-IN')}</span>`;
+}
+
+function _statusBadge(s) {
+    if (!s.lastActivity) return '<span style="background:#f5f5f5;color:#aaa;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">INACTIVE</span>';
+    const days = Math.floor((Date.now() - s.lastActivity.getTime()) / 86400000);
+    if (days <= 1)  return '<span style="background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">ACTIVE</span>';
+    if (days <= 7)  return '<span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">RECENT</span>';
+    if (days <= 30) return '<span style="background:#fff8e1;color:#e65100;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">SLOW</span>';
+    return '<span style="background:#ffebee;color:#b71c1c;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">LAGGING</span>';
+}
+
+function openCompletionTracker() {
+    if (!window.fullData || window.fullData.length === 0) {
+        myAlert('Data load nahi hua. Thodi der baad try karein.'); return;
+    }
+
+    const existing = document.getElementById('trackerModal');
+    if (existing) existing.remove();
+
+    const { arr, maxActive, leaderboard, today } = _computeTrackerData();
+
+    const totalActive  = arr.reduce((s,d) => s + d.active, 0);
+    const totalNew     = arr.reduce((s,d) => s + d.newEntry, 0);
+    const totalUpd     = arr.reduce((s,d) => s + d.updated, 0);
+    const totalDel     = arr.reduce((s,d) => s + d.deleted, 0);
+    const activeDistricts = arr.filter(d => d.lastActivity && (Date.now() - d.lastActivity.getTime()) < 86400000 * 7).length;
+    const laggingDistricts = arr.filter(d => !d.lastActivity || (Date.now() - d.lastActivity.getTime()) > 86400000 * 30).length;
+
+    // Leaderboard medals
+    const MEDALS = ['🥇','🥈','🥉'];
+
+    const leaderRows = leaderboard.map((s, i) => `
+        <tr style="background:${i < 3 ? ['#fffde7','#f3f3f3','#fff3e0'][i] : (i%2===0?'#fff':'#fafafa')};border-bottom:1px solid #f0f0f0;">
+            <td style="padding:10px 12px;font-size:15px;text-align:center;width:36px;">${i < 3 ? MEDALS[i] : '<span style="color:#999;font-size:12px;font-weight:700;">' + (i+1) + '</span>'}</td>
+            <td style="padding:10px 12px;">
+                <div style="font-size:13px;font-weight:700;color:#1a237e;">${s.district}</div>
+                <div style="font-size:10px;color:#888;">${s.loginId}</div>
+            </td>
+            <td style="padding:10px 12px;text-align:center;">
+                <span style="font-size:16px;font-weight:700;color:#1565c0;">${s.active.toLocaleString('en-IN')}</span>
+            </td>
+            <td style="padding:10px 12px;text-align:center;">
+                <span style="background:#e8f5e9;color:#2e7d32;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:700;">+${s.newEntry}</span>
+                <span style="background:#e3f2fd;color:#1565c0;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:700;margin-left:3px;">↻${s.updated}</span>
+            </td>
+            <td style="padding:10px 12px;text-align:center;">${_timeAgo(s.lastActivity)}</td>
+            <td style="padding:10px 12px;text-align:center;">${_statusBadge(s)}</td>
+        </tr>`).join('');
+
+    // Progress bars — all 55 districts
+    // Group by JD
+    const JD_COLOR = {
+        'JD BHOPAL':'#6a1b9a','JD GWALIOR':'#1565c0','JD INDORE':'#2e7d32',
+        'JD JABALPUR':'#e65100','JD UJJAIN':'#b71c1c','JD SAGAR':'#00695c',
+        'JD REWA':'#4527a0','JD NARMADAPURAM':'#558b2f','JD SHAHDOL':'#0277bd'
+    };
+
+    let progressHTML = '';
+    (_DISTRICT_STRUCTURE || []).forEach(jd => {
+        const color = JD_COLOR[jd.jd] || '#555';
+        progressHTML += `
+        <div style="margin-bottom:18px;">
+            <div style="font-size:11px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid ${color}22;">
+                ${jd.jd}
+            </div>`;
+
+        jd.districts.forEach(distName => {
+            const s = arr.find(a => a.district === distName) || { district: distName, active: 0, newEntry: 0, updated: 0, deleted: 0, lastActivity: null };
+            const pct = maxActive > 0 ? Math.round((s.active / maxActive) * 100) : 0;
+            const barColor = s.active === 0 ? '#e0e0e0' : color;
+
+            progressHTML += `
+            <div data-district="${distName}" style="display:grid;grid-template-columns:120px 1fr 60px 90px 80px;gap:8px;align-items:center;margin-bottom:6px;">
+                <div style="font-size:11px;font-weight:600;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${distName}">${distName}</div>
+                <div style="background:#f0f0f0;border-radius:4px;height:10px;overflow:hidden;">
+                    <div style="width:${pct}%;height:100%;background:${barColor};border-radius:4px;transition:width .4s;"></div>
+                </div>
+                <div style="font-size:11px;font-weight:700;color:#333;text-align:right;">${s.active.toLocaleString('en-IN')}</div>
+                <div style="font-size:10px;text-align:center;">${_timeAgo(s.lastActivity)}</div>
+                <div style="font-size:10px;text-align:right;">${_statusBadge(s)}</div>
+            </div>`;
+        });
+
+        progressHTML += `</div>`;
+    });
+
+    const modal = document.createElement('div');
+    modal.id = 'trackerModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.72);z-index:10002;overflow-y:auto;';
+
+    modal.innerHTML = `
+    <div style="max-width:1080px;margin:20px auto 40px;background:#f4f6fa;border-radius:12px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,0.45);">
+
+        <!-- ── Header ── -->
+        <div style="background:linear-gradient(135deg,#0d47a1,#1565c0);color:white;padding:18px 28px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <div style="font-size:19px;font-weight:700;letter-spacing:.4px;">🏆 District Completion Tracker</div>
+                <div style="font-size:12px;opacity:.8;margin-top:3px;">Live progress • Last refreshed: ${today.toLocaleString('en-IN')}</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;">
+                <button onclick="refreshTracker()" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">🔄 Refresh</button>
+                <button onclick="document.getElementById('trackerModal').remove()" style="background:rgba(255,255,255,.15);border:none;color:white;width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer;font-weight:bold;">✕</button>
+            </div>
+        </div>
+
+        <!-- ── KPI Strip ── -->
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:20px 24px 10px;">
+            <div style="background:white;border-radius:8px;padding:13px 15px;border-top:3px solid #1565c0;">
+                <div style="font-size:10px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Total Active</div>
+                <div style="font-size:26px;font-weight:700;color:#1565c0;margin-top:3px;">${totalActive.toLocaleString('en-IN')}</div>
+            </div>
+            <div style="background:white;border-radius:8px;padding:13px 15px;border-top:3px solid #2e7d32;">
+                <div style="font-size:10px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">New Entries</div>
+                <div style="font-size:26px;font-weight:700;color:#2e7d32;margin-top:3px;">${totalNew.toLocaleString('en-IN')}</div>
+            </div>
+            <div style="background:white;border-radius:8px;padding:13px 15px;border-top:3px solid #0277bd;">
+                <div style="font-size:10px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Updated</div>
+                <div style="font-size:26px;font-weight:700;color:#0277bd;margin-top:3px;">${totalUpd.toLocaleString('en-IN')}</div>
+            </div>
+            <div style="background:white;border-radius:8px;padding:13px 15px;border-top:3px solid #2e7d32;">
+                <div style="font-size:10px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Active This Week</div>
+                <div style="font-size:26px;font-weight:700;color:#2e7d32;margin-top:3px;">${activeDistricts}</div>
+            </div>
+            <div style="background:white;border-radius:8px;padding:13px 15px;border-top:3px solid #b71c1c;">
+                <div style="font-size:10px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Lagging (&gt;30d)</div>
+                <div style="font-size:26px;font-weight:700;color:#b71c1c;margin-top:3px;">${laggingDistricts}</div>
+            </div>
+        </div>
+
+        <!-- ── Two Column: Leaderboard + Search ── -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:10px 24px;">
+
+            <!-- Leaderboard -->
+            <div style="background:white;border-radius:10px;overflow:hidden;">
+                <div style="padding:14px 16px;border-bottom:1px solid #f0f0f0;">
+                    <div style="font-size:13px;font-weight:700;color:#1a237e;">🏅 Top 10 Leaderboard</div>
+                    <div style="font-size:11px;color:#888;margin-top:2px;">Score = Active + Updated×2 + New</div>
+                </div>
+                <div style="overflow-y:auto;max-height:340px;">
+                    <table style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#f8f9fa;position:sticky;top:0;">
+                                <th style="padding:8px 10px;font-size:10px;color:#666;font-weight:600;text-align:center;width:36px;">#</th>
+                                <th style="padding:8px 10px;font-size:10px;color:#666;font-weight:600;text-align:left;">District</th>
+                                <th style="padding:8px 10px;font-size:10px;color:#666;font-weight:600;text-align:center;">Records</th>
+                                <th style="padding:8px 10px;font-size:10px;color:#666;font-weight:600;text-align:center;">Activity</th>
+                                <th style="padding:8px 10px;font-size:10px;color:#666;font-weight:600;text-align:center;">Last Active</th>
+                                <th style="padding:8px 10px;font-size:10px;color:#666;font-weight:600;text-align:center;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${leaderRows}</tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Alert Panel: Lagging districts -->
+            <div style="background:white;border-radius:10px;overflow:hidden;">
+                <div style="padding:14px 16px;border-bottom:1px solid #f0f0f0;background:#fff8f8;">
+                    <div style="font-size:13px;font-weight:700;color:#b71c1c;">⚠️ Attention Required</div>
+                    <div style="font-size:11px;color:#888;margin-top:2px;">Districts with no activity in last 30 days</div>
+                </div>
+                <div style="overflow-y:auto;max-height:340px;padding:8px 0;">
+                    ${arr.filter(s => !s.lastActivity || (Date.now() - s.lastActivity.getTime()) > 86400000 * 30)
+                        .sort((a,b) => (a.lastActivityRaw||0) - (b.lastActivityRaw||0))
+                        .map(s => `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 16px;border-bottom:1px solid #ffeaea;">
+                            <div>
+                                <div style="font-size:12px;font-weight:700;color:#333;">${s.district}</div>
+                                <div style="font-size:10px;color:#999;">${s.loginId} • ${s.active} records</div>
+                            </div>
+                            <div style="text-align:right;">
+                                ${_timeAgo(s.lastActivity)}
+                                <div style="margin-top:2px;">${_statusBadge(s)}</div>
+                            </div>
+                        </div>`).join('') || '<div style="padding:20px;text-align:center;color:#2e7d32;font-weight:600;">✅ Sab districts active hain!</div>'
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Progress Bars: All Districts by JD ── -->
+        <div style="padding:10px 24px 28px;">
+            <div style="background:white;border-radius:10px;padding:18px 20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <div style="font-size:13px;font-weight:700;color:#333;">📊 All Districts — Progress View</div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="text" id="trackerSearchBox" oninput="filterTrackerRows(this.value)" placeholder="Search district..." style="padding:5px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;width:160px;">
+                    </div>
+                </div>
+                <div style="font-size:10px;color:#888;margin-bottom:14px;">Progress bar = relative to highest district. Color = JD region.</div>
+
+                <!-- Legend -->
+                <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #f0f0f0;">
+                    ${Object.entries(JD_COLOR).map(([jd, col]) => `<span style="font-size:10px;font-weight:600;color:${col};display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:${col};border-radius:2px;display:inline-block;"></span>${jd}</span>`).join('')}
+                </div>
+
+                <!-- Column headers -->
+                <div style="display:grid;grid-template-columns:120px 1fr 60px 90px 80px;gap:8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #eee;">
+                    <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;">District</div>
+                    <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;">Progress</div>
+                    <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;text-align:right;">Records</div>
+                    <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;text-align:center;">Last Active</div>
+                    <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;text-align:right;">Status</div>
+                </div>
+
+                <div id="trackerProgressBody">${progressHTML}</div>
+            </div>
+        </div>
+
+    </div>`;
+
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function refreshTracker() {
+    openCompletionTracker();
+}
+
+function filterTrackerRows(val) {
+    const body = document.getElementById('trackerProgressBody');
+    if (!body) return;
+    const q = val.trim().toUpperCase();
+    // Show/hide individual district rows (the grid divs)
+    body.querySelectorAll('[data-district]').forEach(el => {
+        el.style.display = (!q || el.dataset.district.includes(q)) ? '' : 'none';
+    });
+}
+
+// Re-render after fresh data load
+const _origLoadDataIntoMemory2 = typeof loadDataIntoMemory === 'function' ? loadDataIntoMemory : null;
 </script>
