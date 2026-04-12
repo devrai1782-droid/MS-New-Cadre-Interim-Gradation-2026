@@ -743,7 +743,7 @@ tr.row-locked-external {
         </div>
         <div class="row-item">
           <div class="f-num">7</div>
-          <div class="f-label">DATE OF BIRTH<br>(DD-MM-YYYY)</div>
+          <div class="f-label">DATE OF BIRTH</div>
           <input type="date" id="in7" class="f-input date-field" min="1964-01-01" onchange="validateFieldGap()">
         </div>
         <div class="row-item" style="border:1.5px solid #d4af37;background:#fffdf0;">
@@ -753,7 +753,7 @@ tr.row-locked-external {
         </div>
         <div class="row-item">
           <div class="f-num">8</div>
-          <div class="f-label">MODE OF APPOINTMENT<br>(PRO / DIR)</div>
+          <div class="f-label">MODE OF APPOINTMENT</div>
           <select id="in8" class="f-input" onchange="autoDesignationLogic()">
             <option value="">SELECT</option>
             <option value="DIR">DIR</option>
@@ -762,7 +762,7 @@ tr.row-locked-external {
         </div>
         <div class="row-item">
           <div class="f-num">9</div>
-          <div class="f-label">UG SUBJECT AS PER APPOINTMENT AND PROMOTION ORDER</div>
+          <div class="f-label">UG Subject as per appointment and Promotion</div>
           <select id="in9" class="f-input"><option value="">SELECT SUBJECT</option><option value="HINDI">HINDI</option><option value="ENGLISH">ENGLISH</option><option value="SANSKRIT">SANSKRIT</option><option value="MATHS">MATHS</option><option value="SCIENCE">SCIENCE</option><option value="SOCIAL SCIENCE">SOCIAL SCIENCE</option><option value="URDU">URDU</option><option value="VOCATIONAL">VOCATIONAL</option></select>
         </div>
         <div class="row-item">
@@ -807,7 +807,7 @@ tr.row-locked-external {
         </div>
         <div class="row-item">
           <div class="f-num">12</div>
-          <div class="f-label">PG SUBJECT (OTHER)</div>
+          <div class="f-label">PG SUBJECT</div>
           <div class="ms-container" onclick="toggleMS(event,'ms12')">
             <div id="text12" class="ms-selected-text">SELECT</div>
             <div id="ms12" class="ms-options">
@@ -845,7 +845,7 @@ tr.row-locked-external {
         </div>
         <div class="row-item">
           <div class="f-num">14</div>
-          <div class="f-label">DATE OF FIRST APPOINTMENT<br>(MIN: 17-06-1998)</div>
+          <div class="f-label">DATE OF FIRST APPOINTMENT</div>
           <input type="date" id="in14" class="f-input date-field" min="1998-06-01" oninput="autoDesignationLogic(); validateFieldGap();">
         </div>
         <div class="row-item">
@@ -855,7 +855,7 @@ tr.row-locked-external {
         </div>
         <div class="row-item">
           <div class="f-num">16</div>
-          <div class="f-label">1ST PROMOTION DATE<br>(MIN: 02-04-2007)</div>
+          <div class="f-label">Date of Appointment in Adhyapak by promotion If any</div>
           <input type="date" id="in16" class="f-input date-field" min="2007-04-01" oninput="autoDesignationLogic(); validateFieldGap();">
         </div>
         <div class="row-item">
@@ -870,7 +870,7 @@ tr.row-locked-external {
         </div>
         <div class="row-item">
           <div class="f-num">19</div>
-          <div class="f-label">SAMVILON / TRANSFER DATE</div>
+          <div class="f-label">Inter division Transfer Date</div>
           <div style="display:flex;width:190px;background:#fff;">
             <select id="in19mode" style="width:60px;font-size:11px;" onchange="handle18Mode()">
               <option value="DATE">DATE</option>
@@ -878,11 +878,6 @@ tr.row-locked-external {
             </select>
             <input type="date" id="in19" class="f-input date-field" style="flex:1;" oninput="calculateSeniority()">
           </div>
-        </div>
-        <div class="row-item">
-          <div class="f-num" style="font-size:9px;">TR</div>
-          <div class="f-label">TRANSFER DETAILS</div>
-          <input type="text" id="transferDetailsDisplay" class="f-input" readonly tabindex="-1" style="background:#e8f5e9;color:#555;">
         </div>
 
         <!-- Upload Document Row -->
@@ -904,7 +899,7 @@ tr.row-locked-external {
         <div class="section-header purple">माध्यमिक शिक्षक की पदस्थापना एवं जिला</div>
         <div class="row-item">
           <div class="f-num">20</div>
-          <div class="f-label">PRESENT POSTING PLACE<br>(SCHOOL NAME)</div>
+          <div class="f-label">PRESENT POSTING PLACE</div>
           <input type="text" id="in20" class="f-input">
         </div>
         <div class="row-item">
@@ -1029,11 +1024,11 @@ const fieldNames = {
     field18: "Date of seniority in present cadre",
     field19: "Inter division Transfer Date",
     field20: "Present Posting Place",
-    field21: "DISE Code",
+    field21: "UDISE Code",
     field22: "Present Posting District",
     field23: "उच्च पद पर ज्वाइन किया (YES OR NO)",
     field24: "उच्च पद प्रभार की शाला का नाम",
-    field25: "उच्च पद प्रभार की शाला का डाइस कोड",
+    field25: "उच्च पद प्रभार की शाला का UDISE कोड",
     field26: "उच्च पद प्रभार का जिला",
     field27: "Remark"
 };
@@ -1580,7 +1575,7 @@ function checkLogin() {
     { name: "Name", class: "col-lg" },
     { name: "Category", class: "col-sm" },
     { name: "GENDER", class: "col-sm" },
-    { name: "Date of Birth (dd-mm-yyyy)", class: "col-md" },
+    { name: "Date of Birth", class: "col-md" },
     { name: "Mode of Appointment", class: "col-md" },
     { name: "UG Subject as per appointment and Promotion", class: "col-lg" },
     { name: "Professional Qualification", class: "col-lg" },
@@ -1594,11 +1589,11 @@ function checkLogin() {
     { name: "Date of seniority in present cadre", class: "col-md" },
     { name: "Inter division Transfer Date", class: "col-md" },
     { name: "Present Posting Place", class: "col-xl" },
-    { name: "DISE Code", class: "col-md" },
+    { name: "UDISE Code", class: "col-md" },
     { name: "Present Posting District", class: "col-lg" },
     { name: "उच्च पद पर ज्वाइन किया (YES OR NO)", class: "col-md" },
     { name: "उच्च पद प्रभार की शाला का नाम", class: "col-xl" },
-    { name: "उच्च पद प्रभार की शाला का डाइस कोड", class: "col-md" },
+    { name: "उच्च पद प्रभार की शाला का UDISE कोड", class: "col-md" },
     { name: "उच्च पद प्रभार का जिला", class: "col-lg" },
     { name: "Remark (Deputation or other issue etc)", class: "col-xl" },
     { name: "Status (New Entry/Updated)", class: "col-md" },       // Column 28
