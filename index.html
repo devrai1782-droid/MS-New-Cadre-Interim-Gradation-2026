@@ -488,7 +488,7 @@ tr.row-locked-external {
 </style>
 </head>
 <body>
-<div id="loginOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#1a237e;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;">
+<div id="loginOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#1a237e;z-index:1000010;display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;">
   <div style="background:white;padding:30px;border-radius:8px;width:360px;box-shadow:0 10px 25px rgba(0,0,0,.5);color:#333;text-align:center;">
     <div style="font-size:42px;margin-bottom:8px;">🎓</div>
     <h2 style="margin:0 0 4px 0;color:#1a237e;font-size:18px;">MS GRADATION ERP LOGIN</h2>
@@ -630,6 +630,7 @@ tr.row-locked-external {
         <div style="padding:4px 14px 6px;font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #eee;margin:6px 0 4px;">TOOLS</div>
         <button class="otb-item" onclick="showAuditTrail();closeOtherToolbar();">📋 AUDIT TRAIL</button>
         <button class="otb-item" onclick="showShortcutsHelp();closeOtherToolbar();">⌨️ SHORTCUTS</button>
+        <button class="otb-item" onclick="openDistrictPasswordPanel();closeOtherToolbar();" style="color:#1565c0;font-weight:700;">🔑 DISTRICT PASSWORDS</button>
 
         <div style="padding:4px 14px 6px;font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #eee;margin:6px 0 4px;">ZOOM</div>
         <div style="padding:4px 14px 8px;display:flex;align-items:center;gap:6px;">
@@ -1299,7 +1300,23 @@ function saveTimeLimit() {
 }
 
 // 3. लॉक चेक करने का मुख्य लॉजिक (Strict Comparison)
+// NOTE: Date restriction sirf JD aur DEO ke liye hai — DPI hamesha bypass karta hai
 function checkLockStatus() {
+    // ✅ RULE 1: DPI ko date restriction se hamesha exempt rakho (DPI kabhi bhi lock nahi hoga)
+    if (window.currentUser === 'DPI') {
+        document.getElementById('lockScreen').style.display = 'none';
+        return;
+    }
+
+    // ✅ RULE 2: Agar koi logged in nahi hai to lockScreen mat dikhao
+    // (loginOverlay pehle se hi access control kar raha hai)
+    // Lock sirf JD/DEO login ke BAAD apply hoga
+    if (!window.currentUser) {
+        document.getElementById('lockScreen').style.display = 'none';
+        return;
+    }
+
+    // ✅ RULE 3: Sirf JD aur DEO ke liye date check karo
     const startStr = localStorage.getItem('config_start_date');
     const endStr = localStorage.getItem('config_end_date');
 
@@ -1316,7 +1333,7 @@ function checkLockStatus() {
             document.getElementById('lockMsg').innerText = `इस पोर्टल पर कार्य करने की अवधि ${startStr} से ${endStr} तक निर्धारित थी।`;
             setTimeout(() => document.getElementById('lockScreen').focus(), 100);
             
-            // ── FIX: DPI panel aur password modal ko lock screen ke UPAR rakho ──
+            // ── DPI panel aur password modal ko lock screen ke UPAR rakho ──
             const panel = document.getElementById('dpiControlPanel');
             panel.style.zIndex = '1000001'; // lock screen (999990) se upar
             document.body.appendChild(panel);
@@ -1500,7 +1517,7 @@ const districtCredentials = {
     "DEOBHOPAL": "1782", "DEOBURHANPUR": "9023", "DEOCHHATARPUR": "7741", "DEOCHHINDWARA": "1150", 
     "DEODAMOH": "4932", "DEODATIA": "3368", "DEODEWAS": "8120", "DEODHAR": "2947", 
     "DEODINDORI": "6051", "DEOGUNA": "4819", "DEOGWALIOR": "7234", "DEOHARDA": "5512", 
-    "DEOHOSHANGABAD": "2034", "DEOINDORE": "9938", "DEOJABALPUR": "1029", "DEOJHABUA": "3384", 
+    "DEOINDORE": "9938", "DEOJABALPUR": "1029", "DEOJHABUA": "3384", 
     "DEOKATNI": "6721", "DEOKHANDWA": "4490", "DEOKHARGONE": "2105", "DEOMANDLA": "8832", 
     "DEOMANDSAUR": "5561", "DEOMORENA": "7710", "DEONARMADAPURAM": "2034", "DEONARSINGHPUR": "9912", 
     "DEONEEMUCH": "4420", "DEONIWARI": "3185", "DEOPANNA": "6629", "DEORAISEN": "8843", 
@@ -1551,6 +1568,9 @@ function checkLogin() {
 
         // --- REALTIME: Join collaboration channel ---
         if (typeof initRealtime === 'function') initRealtime();
+
+        // --- DATE LOCK CHECK (DPI bypass, JD/DEO restricted) ---
+        if (typeof checkLockStatus === 'function') checkLockStatus();
 
         console.log("Logged in successfully as: " + user);
     } else {
@@ -5496,6 +5516,8 @@ checkLogin = function() {
         if (typeof initRealtime === 'function') initRealtime();
         // ✅ Title edit hint: sirf DPI ke liye dikhao
         if (typeof _updateTitleHintVisibility === 'function') _updateTitleHintVisibility();
+        // ✅ Date lock check: DPI ke liye bypass, JD/DEO ke liye apply
+        if (typeof checkLockStatus === 'function') checkLockStatus();
     } else {
         let attempts = parseInt(localStorage.getItem(attemptsKey) || '0') + 1;
         localStorage.setItem(attemptsKey, attempts);
@@ -6517,4 +6539,467 @@ function filterTrackerRows(val) {
 
 // Re-render after fresh data load
 const _origLoadDataIntoMemory2 = typeof loadDataIntoMemory === 'function' ? loadDataIntoMemory : null;
+</script>
+
+<!-- ═══ DISTRICT PASSWORD UNLOCK MODAL ═══ -->
+<div id="distPassUnlockModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:1000010;align-items:center;justify-content:center;">
+  <div style="background:white;padding:30px 34px;border-radius:12px;width:340px;box-shadow:0 12px 40px rgba(0,0,0,.45);text-align:center;">
+    <div style="font-size:40px;margin-bottom:8px;">🔑</div>
+    <h3 style="margin:0 0 5px;color:#002e5b;font-size:17px;">District Password Vault</h3>
+    <p style="font-size:12px;color:#666;margin-bottom:18px;">यह panel sirf DPI ke liye hai। Password enter karein।</p>
+    <input type="password" id="distPassUnlockInput"
+      style="width:100%;padding:10px;border:1.5px solid #ccc;border-radius:6px;font-size:15px;margin-bottom:8px;box-sizing:border-box;letter-spacing:3px;text-align:center;"
+      placeholder="••••"
+      onkeydown="if(event.key==='Enter')verifyDistPassUnlock()">
+    <div id="distPassUnlockErr" style="color:#c62828;font-size:11px;min-height:16px;margin-bottom:10px;font-weight:bold;"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="verifyDistPassUnlock()" style="flex:1;padding:11px;background:#002e5b;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;">✅ OPEN</button>
+      <button onclick="document.getElementById('distPassUnlockModal').style.display='none';document.getElementById('distPassUnlockInput').value='';document.getElementById('distPassUnlockErr').textContent='';" style="flex:1;padding:11px;background:#eee;color:#333;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DISTRICT PASSWORD PANEL ═══ -->
+<div id="districtPasswordPanel" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:1000011;overflow-y:auto;">
+  <div style="max-width:820px;margin:30px auto 50px;background:#f4f6fa;border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#002e5b,#1565c0);color:white;padding:18px 26px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:18px;font-weight:700;letter-spacing:.4px;">🔑 District JD / DPI Password Vault</div>
+        <div style="font-size:11px;opacity:.75;margin-top:3px;">Madhya Pradesh — MS Gradation ERP — DPI Access Only</div>
+      </div>
+      <button onclick="closeDistrictPasswordPanel()" style="background:rgba(255,255,255,.18);border:none;color:white;width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer;font-weight:bold;">✕</button>
+    </div>
+
+    <!-- Search Bar -->
+    <div style="padding:14px 20px 4px;">
+      <input type="text" id="distPassSearch" oninput="filterDistPassTable(this.value)"
+        placeholder="🔍 District ya JD naam search karein..."
+        style="width:100%;padding:9px 14px;border:1.5px solid #ccc;border-radius:7px;font-size:13px;box-sizing:border-box;">
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:8px;padding:10px 20px 0;">
+      <button onclick="showDistPassTab('all')" id="tabAll" style="padding:6px 16px;border:none;border-radius:5px 5px 0 0;cursor:pointer;font-size:12px;font-weight:700;background:#1565c0;color:white;">ALL</button>
+      <button onclick="showDistPassTab('dpi')" id="tabDPI" style="padding:6px 16px;border:none;border-radius:5px 5px 0 0;cursor:pointer;font-size:12px;font-weight:700;background:#e0e0e0;color:#333;">DPI / STATE</button>
+      <button onclick="showDistPassTab('jd')" id="tabJD" style="padding:6px 16px;border:none;border-radius:5px 5px 0 0;cursor:pointer;font-size:12px;font-weight:700;background:#e0e0e0;color:#333;">JD LEVEL</button>
+      <button onclick="showDistPassTab('deo')" id="tabDEO" style="padding:6px 16px;border:none;border-radius:5px 5px 0 0;cursor:pointer;font-size:12px;font-weight:700;background:#e0e0e0;color:#333;">DEO / DISTRICT</button>
+    </div>
+
+    <!-- Cards Grid -->
+    <div style="padding:0 20px 24px;">
+      <div id="distPassTableBody" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:4px;"></div>
+      <div style="margin-top:12px;font-size:10px;color:#999;text-align:center;">⚠️ Yeh information strictly confidential hai — sirf DPI use kare</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── District Password Panel Logic ──
+
+const DIST_PANEL_PASSWORD = "1782";
+
+function openDistrictPasswordPanel() {
+  // DPI already logged in? Still ask for panel password
+  document.getElementById('distPassUnlockModal').style.display = 'flex';
+  document.getElementById('distPassUnlockInput').value = '';
+  document.getElementById('distPassUnlockErr').textContent = '';
+  setTimeout(() => document.getElementById('distPassUnlockInput').focus(), 100);
+}
+
+function verifyDistPassUnlock() {
+  const entered = document.getElementById('distPassUnlockInput').value.trim();
+  if (entered === DIST_PANEL_PASSWORD) {
+    document.getElementById('distPassUnlockModal').style.display = 'none';
+    document.getElementById('distPassUnlockInput').value = '';
+    document.getElementById('distPassUnlockErr').textContent = '';
+    showDistrictPasswordPanel();
+  } else {
+    document.getElementById('distPassUnlockErr').textContent = '❌ Galat password! Sirf DPI ke liye.';
+    document.getElementById('distPassUnlockInput').value = '';
+    document.getElementById('distPassUnlockInput').focus();
+  }
+}
+
+function showDistrictPasswordPanel() {
+  buildDistPassTable('all');
+  document.getElementById('districtPasswordPanel').style.display = 'block';
+  document.getElementById('distPassSearch').value = '';
+}
+
+function closeDistrictPasswordPanel() {
+  document.getElementById('districtPasswordPanel').style.display = 'none';
+}
+
+function showDistPassTab(tab) {
+  ['all','dpi','jd','deo'].forEach(t => {
+    const btn = document.getElementById('tab' + t.toUpperCase());
+    if(btn){ btn.style.background = (t===tab)?'#1565c0':'#e0e0e0'; btn.style.color = (t===tab)?'white':'#333'; }
+  });
+  document.getElementById('distPassSearch').value = '';
+  buildDistPassTable(tab);
+}
+
+function buildDistPassTable(tab) {
+  const allEntries = [
+    // DPI / STATE
+    { type:'DPI', label:'DPI (State Level)', id:'DPI', pass: districtCredentials['DPI'] },
+    // JD Level
+    { type:'JD', label:'JD Bhopal', id:'JDBHOPAL', pass: districtCredentials['JDBHOPAL'] },
+    { type:'JD', label:'JD Gwalior', id:'JDGWALIOR', pass: districtCredentials['JDGWALIOR'] },
+    { type:'JD', label:'JD Indore', id:'JDINDORE', pass: districtCredentials['JDINDORE'] },
+    { type:'JD', label:'JD Jabalpur', id:'JDJABALPUR', pass: districtCredentials['JDJABALPUR'] },
+    { type:'JD', label:'JD Rewa', id:'JDREWA', pass: districtCredentials['JDREWA'] },
+    { type:'JD', label:'JD Sagar', id:'JDSAGAR', pass: districtCredentials['JDSAGAR'] },
+    { type:'JD', label:'JD Ujjain', id:'JDUJJAIN', pass: districtCredentials['JDUJJAIN'] },
+    { type:'JD', label:'JD Shahdol', id:'JDSHAHDOL', pass: districtCredentials['JDSHAHDOL'] },
+    { type:'JD', label:'JD Narmadapuram', id:'JDNARMADAPURAM', pass: districtCredentials['JDNARMADAPURAM'] },
+    // DEO Districts
+    { type:'DEO', label:'DEO Agar Malwa', id:'DEOAGARMALWA', pass: districtCredentials['DEOAGARMALWA'] },
+    { type:'DEO', label:'DEO Alirajpur', id:'DEOALIRAJPUR', pass: districtCredentials['DEOALIRAJPUR'] },
+    { type:'DEO', label:'DEO Anuppur', id:'DEOANUPPUR', pass: districtCredentials['DEOANUPPUR'] },
+    { type:'DEO', label:'DEO Ashoknagar', id:'DEOASHOKNAGAR', pass: districtCredentials['DEOASHOKNAGAR'] },
+    { type:'DEO', label:'DEO Balaghat', id:'DEOBALAGHAT', pass: districtCredentials['DEOBALAGHAT'] },
+    { type:'DEO', label:'DEO Barwani', id:'DEOBARWANI', pass: districtCredentials['DEOBARWANI'] },
+    { type:'DEO', label:'DEO Betul', id:'DEOBETUL', pass: districtCredentials['DEOBETUL'] },
+    { type:'DEO', label:'DEO Bhind', id:'DEOBHIND', pass: districtCredentials['DEOBHIND'] },
+    { type:'DEO', label:'DEO Bhopal', id:'DEOBHOPAL', pass: districtCredentials['DEOBHOPAL'] },
+    { type:'DEO', label:'DEO Burhanpur', id:'DEOBURHANPUR', pass: districtCredentials['DEOBURHANPUR'] },
+    { type:'DEO', label:'DEO Chhatarpur', id:'DEOCHHATARPUR', pass: districtCredentials['DEOCHHATARPUR'] },
+    { type:'DEO', label:'DEO Chhindwara', id:'DEOCHHINDWARA', pass: districtCredentials['DEOCHHINDWARA'] },
+    { type:'DEO', label:'DEO Damoh', id:'DEODAMOH', pass: districtCredentials['DEODAMOH'] },
+    { type:'DEO', label:'DEO Datia', id:'DEODATIA', pass: districtCredentials['DEODATIA'] },
+    { type:'DEO', label:'DEO Dewas', id:'DEODEWAS', pass: districtCredentials['DEODEWAS'] },
+    { type:'DEO', label:'DEO Dhar', id:'DEODHAR', pass: districtCredentials['DEODHAR'] },
+    { type:'DEO', label:'DEO Dindori', id:'DEODINDORI', pass: districtCredentials['DEODINDORI'] },
+    { type:'DEO', label:'DEO Guna', id:'DEOGUNA', pass: districtCredentials['DEOGUNA'] },
+    { type:'DEO', label:'DEO Gwalior', id:'DEOGWALIOR', pass: districtCredentials['DEOGWALIOR'] },
+    { type:'DEO', label:'DEO Harda', id:'DEOHARDA', pass: districtCredentials['DEOHARDA'] },
+    { type:'DEO', label:'DEO Indore', id:'DEOINDORE', pass: districtCredentials['DEOINDORE'] },
+    { type:'DEO', label:'DEO Jabalpur', id:'DEOJABALPUR', pass: districtCredentials['DEOJABALPUR'] },
+    { type:'DEO', label:'DEO Jhabua', id:'DEOJHABUA', pass: districtCredentials['DEOJHABUA'] },
+    { type:'DEO', label:'DEO Katni', id:'DEOKATNI', pass: districtCredentials['DEOKATNI'] },
+    { type:'DEO', label:'DEO Khandwa', id:'DEOKHANDWA', pass: districtCredentials['DEOKHANDWA'] },
+    { type:'DEO', label:'DEO Khargone', id:'DEOKHARGONE', pass: districtCredentials['DEOKHARGONE'] },
+    { type:'DEO', label:'DEO Mandla', id:'DEOMANDLA', pass: districtCredentials['DEOMANDLA'] },
+    { type:'DEO', label:'DEO Mandsaur', id:'DEOMANDSAUR', pass: districtCredentials['DEOMANDSAUR'] },
+    { type:'DEO', label:'DEO Morena', id:'DEOMORENA', pass: districtCredentials['DEOMORENA'] },
+    { type:'DEO', label:'DEO Narmadapuram', id:'DEONARMADAPURAM', pass: districtCredentials['DEONARMADAPURAM'] },
+    { type:'DEO', label:'DEO Narsinghpur', id:'DEONARSINGHPUR', pass: districtCredentials['DEONARSINGHPUR'] },
+    { type:'DEO', label:'DEO Neemuch', id:'DEONEEMUCH', pass: districtCredentials['DEONEEMUCH'] },
+    { type:'DEO', label:'DEO Niwari', id:'DEONIWARI', pass: districtCredentials['DEONIWARI'] },
+    { type:'DEO', label:'DEO Panna', id:'DEOPANNA', pass: districtCredentials['DEOPANNA'] },
+    { type:'DEO', label:'DEO Raisen', id:'DEORAISEN', pass: districtCredentials['DEORAISEN'] },
+    { type:'DEO', label:'DEO Rajgarh', id:'DEORAJGARH', pass: districtCredentials['DEORAJGARH'] },
+    { type:'DEO', label:'DEO Ratlam', id:'DEORATLAM', pass: districtCredentials['DEORATLAM'] },
+    { type:'DEO', label:'DEO Rewa', id:'DEOREWA', pass: districtCredentials['DEOREWA'] },
+    { type:'DEO', label:'DEO Sagar', id:'DEOSAGAR', pass: districtCredentials['DEOSAGAR'] },
+    { type:'DEO', label:'DEO Satna', id:'DEOSATNA', pass: districtCredentials['DEOSATNA'] },
+    { type:'DEO', label:'DEO Sehore', id:'DEOSEHORE', pass: districtCredentials['DEOSEHORE'] },
+    { type:'DEO', label:'DEO Seoni', id:'DEOSEONI', pass: districtCredentials['DEOSEONI'] },
+    { type:'DEO', label:'DEO Shahdol', id:'DEOSHAHDOL', pass: districtCredentials['DEOSHAHDOL'] },
+    { type:'DEO', label:'DEO Shajapur', id:'DEOSHAJAPUR', pass: districtCredentials['DEOSHAJAPUR'] },
+    { type:'DEO', label:'DEO Sheopur', id:'DEOSHEOPUR', pass: districtCredentials['DEOSHEOPUR'] },
+    { type:'DEO', label:'DEO Shivpuri', id:'DEOSHIVPURI', pass: districtCredentials['DEOSHIVPURI'] },
+    { type:'DEO', label:'DEO Sidhi', id:'DEOSIDHI', pass: districtCredentials['DEOSIDHI'] },
+    { type:'DEO', label:'DEO Singrauli', id:'DEOSINGRAULI', pass: districtCredentials['DEOSINGRAULI'] },
+    { type:'DEO', label:'DEO Tikamgarh', id:'DEOTIKAMGARH', pass: districtCredentials['DEOTIKAMGARH'] },
+    { type:'DEO', label:'DEO Ujjain', id:'DEOUJJAIN', pass: districtCredentials['DEOUJJAIN'] },
+    { type:'DEO', label:'DEO Umaria', id:'DEOUMARIA', pass: districtCredentials['DEOUMARIA'] },
+    { type:'DEO', label:'DEO Vidisha', id:'DEOVIDISHA', pass: districtCredentials['DEOVIDISHA'] },
+    { type:'DEO', label:'DEO Pandhurna', id:'DEOPANDHURNA', pass: districtCredentials['DEOPANDHURNA'] },
+    { type:'DEO', label:'DEO Maihar', id:'DEOMAIHAR', pass: districtCredentials['DEOMAIHAR'] },
+    { type:'DEO', label:'DEO Mauganj', id:'DEOMAUGANJ', pass: districtCredentials['DEOMAUGANJ'] },
+  ];
+
+  const filtered = tab === 'all' ? allEntries :
+                   tab === 'dpi' ? allEntries.filter(e => e.type==='DPI') :
+                   tab === 'jd'  ? allEntries.filter(e => e.type==='JD') :
+                                   allEntries.filter(e => e.type==='DEO');
+
+  renderDistPassRows(filtered);
+}
+
+function renderDistPassRows(entries) {
+  const container = document.getElementById('distPassTableBody');
+  const typeColors = { DPI:'#c62828', JD:'#1565c0', DEO:'#2e7d32' };
+  const typeBg    = { DPI:'#ffebee', JD:'#e3f2fd', DEO:'#e8f5e9' };
+  const typeBorder= { DPI:'#c62828', JD:'#1565c0', DEO:'#2e7d32' };
+
+  if(!entries.length){
+    container.innerHTML = '<div style="grid-column:1/-1;padding:30px;text-align:center;color:#999;font-size:13px;">Koi result nahi mila 🔍</div>';
+    return;
+  }
+
+  container.innerHTML = entries.map((e, i) => `
+    <div data-id="${e.id}" data-label="${e.label.toUpperCase()}"
+      style="background:white;border-radius:10px;border:1.5px solid ${typeBorder[e.type]};
+             padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.07);transition:.2s;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="background:${typeBg[e.type]};color:${typeColors[e.type]};padding:2px 9px;
+                     border-radius:4px;font-size:10px;font-weight:800;">${e.type}</span>
+        <span style="font-size:10px;color:#bbb;font-weight:600;">#${i+1}</span>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:#002e5b;margin-bottom:2px;">${e.label}</div>
+      <div style="font-size:10px;color:#999;margin-bottom:12px;font-family:monospace;">${e.id}</div>
+
+      <div style="background:#f0f4ff;border-radius:7px;padding:10px 12px;text-align:center;margin-bottom:10px;">
+        <div style="font-size:10px;color:#888;font-weight:600;margin-bottom:4px;">PASSWORD</div>
+        <div id="pw_${e.id}" style="font-family:monospace;font-size:22px;font-weight:900;
+             color:#002e5b;letter-spacing:6px;">••••</div>
+      </div>
+
+      <div style="display:flex;gap:6px;">
+        <button onclick="togglePassVis('${e.id}','${e.pass}')"
+          style="flex:1;padding:7px;border:1.5px solid #ccc;border-radius:6px;cursor:pointer;
+                 background:white;color:#555;font-size:11px;font-weight:700;">
+          👁 Show/Hide
+        </button>
+        <button onclick="copyDistPass('${e.pass}','${e.id}')" id="cpbtn_${e.id}"
+          style="flex:1;padding:7px;border:none;border-radius:6px;cursor:pointer;
+                 background:#1565c0;color:white;font-size:11px;font-weight:700;">
+          📋 Copy
+        </button>
+      </div>
+      <div style="margin-top:8px;">
+        <button onclick="openEditPassword('${e.id}','${e.type}')" 
+          style="width:100%;padding:8px;border:none;border-radius:6px;cursor:pointer;
+                 background:linear-gradient(135deg,${typeColors[e.type]},${e.type==='DPI'?'#b71c1c':e.type==='JD'?'#0d47a1':'#1b5e20'});
+                 color:white;font-size:11px;font-weight:700;">
+          ✏️ Edit ${e.type} Password
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function togglePassVis(id, pass) {
+  const el = document.getElementById('pw_' + id);
+  if(!el) return;
+  el.textContent = (el.textContent === '••••') ? pass : '••••';
+}
+
+function copyDistPass(pass, id) {
+  navigator.clipboard.writeText(pass).then(() => {
+    const btn = document.getElementById('cpbtn_' + id);
+    if(btn){ btn.textContent='✅ Copied!'; btn.style.background='#2e7d32'; setTimeout(()=>{ btn.textContent='📋 Copy'; btn.style.background='#1565c0'; }, 1800); }
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = pass;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = document.getElementById('cpbtn_' + id);
+    if(btn){ btn.textContent='✅ Copied!'; btn.style.background='#2e7d32'; setTimeout(()=>{ btn.textContent='📋 Copy'; btn.style.background='#1565c0'; }, 1800); }
+  });
+}
+
+function openDpiEditPassword() {
+  if (window.currentUser !== 'DPI') {
+    alert('⛔ Yeh option sirf DPI ke liye hai.');
+    return;
+  }
+  const old = document.getElementById('dpiEditPassModal');
+  if (old) old.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'dpiEditPassModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000020;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+  <div style="background:white;border-radius:12px;width:90%;max-width:380px;box-shadow:0 15px 50px rgba(0,0,0,.5);overflow:hidden;font-family:sans-serif;">
+    <div style="background:linear-gradient(90deg,#b71c1c,#c62828);color:white;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+      <b style="font-size:15px;">✏️ DPI Password Edit</b>
+      <button onclick="document.getElementById('dpiEditPassModal').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px;font-weight:bold;">✕</button>
+    </div>
+    <div style="padding:24px;">
+      <p style="font-size:12px;color:#c62828;background:#ffebee;padding:8px 12px;border-radius:6px;margin:0 0 18px 0;font-weight:600;">⚠️ DPI password change karna ek sensitive action hai।</p>
+      <label style="font-size:11px;font-weight:bold;color:#333;">नया PASSWORD</label>
+      <input id="dpiNewPass" type="password"
+        style="width:100%;padding:10px;margin:6px 0 14px 0;border:1.5px solid #ccc;border-radius:5px;font-size:14px;box-sizing:border-box;"
+        oninput="dpiPwStrengthCheck(this.value)" placeholder="Naya password enter karein">
+      <label style="font-size:11px;font-weight:bold;color:#333;">PASSWORD CONFIRM करें</label>
+      <input id="dpiConfirmPass" type="password"
+        style="width:100%;padding:10px;margin:6px 0 14px 0;border:1.5px solid #ccc;border-radius:5px;font-size:14px;box-sizing:border-box;"
+        placeholder="Dobara enter karein">
+      <div style="background:#eee;border-radius:4px;height:6px;overflow:hidden;margin-bottom:4px;">
+        <div id="dpiPwBar" style="height:100%;width:0%;border-radius:4px;transition:width 0.3s,background 0.3s;"></div>
+      </div>
+      <div id="dpiPwLabel" style="font-size:10px;color:#888;margin-bottom:14px;"></div>
+      <div id="dpiEditPassErr" style="color:#c62828;font-size:11px;min-height:16px;margin-bottom:10px;font-weight:bold;"></div>
+      <button onclick="saveDpiNewPassword()"
+        style="width:100%;padding:12px;background:#b71c1c;color:white;border:none;border-radius:5px;font-weight:bold;cursor:pointer;font-size:13px;">
+        💾 DPI Password Save करें
+      </button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  setTimeout(() => document.getElementById('dpiNewPass').focus(), 100);
+}
+
+function dpiPwStrengthCheck(val) {
+  const bar = document.getElementById('dpiPwBar');
+  const label = document.getElementById('dpiPwLabel');
+  if (!bar || !label) return;
+  let score = 0;
+  if (val.length >= 4) score++;
+  if (val.length >= 6) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const levels = [
+    {w:'0%',bg:'#eee',t:''},{w:'20%',bg:'#e53935',t:'बहुत कमज़ोर'},
+    {w:'40%',bg:'#f57c00',t:'कमज़ोर'},{w:'60%',bg:'#fbc02d',t:'ठीक है'},
+    {w:'80%',bg:'#7cb342',t:'अच्छा'},{w:'100%',bg:'#2e7d32',t:'बहुत मज़बूत ✅'}
+  ];
+  const lvl = levels[score] || levels[0];
+  bar.style.width = lvl.w; bar.style.background = lvl.bg;
+  label.innerText = lvl.t; label.style.color = lvl.bg;
+}
+
+function saveDpiNewPassword() {
+  const newPass     = document.getElementById('dpiNewPass').value.trim();
+  const confirmPass = document.getElementById('dpiConfirmPass').value.trim();
+  const errDiv      = document.getElementById('dpiEditPassErr');
+  if (!newPass || newPass.length < 4) { errDiv.innerHTML = '❌ Password कम से कम 4 characters का होना चाहिए।'; return; }
+  if (newPass !== confirmPass) { errDiv.innerHTML = '❌ Passwords match नहीं हुए।'; return; }
+  const CUSTOM_PASS_KEY = 'msErp_customPasswords';
+  const custom = JSON.parse(localStorage.getItem(CUSTOM_PASS_KEY) || '{}');
+  const oldPass = custom['DPI'] || districtCredentials['DPI'] || '(default)';
+  custom['DPI'] = newPass;
+  localStorage.setItem(CUSTOM_PASS_KEY, JSON.stringify(custom));
+  districtCredentials['DPI'] = newPass;
+  if (typeof auditLog === 'function') auditLog('DPI_PASSWORD_CHANGED', 'DPI password changed by DPI admin');
+  const PW_RESET_LOG_KEY = 'dpi_pw_reset_log';
+  const resetLog = JSON.parse(localStorage.getItem(PW_RESET_LOG_KEY) || '[]');
+  resetLog.unshift({ userId:'DPI', dateTime: new Date().toLocaleString('en-IN',{hour12:true}), timestamp: Date.now(), resetBy:'DPI (Self)', oldPass, newPass });
+  localStorage.setItem(PW_RESET_LOG_KEY, JSON.stringify(resetLog));
+  errDiv.innerHTML = '<span style="color:#2e7d32;font-weight:bold;">✅ DPI Password successfully बदल दिया गया!</span>';
+  setTimeout(() => {
+    document.getElementById('dpiEditPassModal')?.remove();
+    buildDistPassTable('dpi');
+    showDistPassTab('dpi');
+  }, 1500);
+}
+
+
+// ── UNIVERSAL EDIT PASSWORD FUNCTION (DPI, JD, DEO sab ke liye) ──────────────
+function openEditPassword(userId, userType) {
+  // Security: Sirf DPI hi kisi ka bhi password edit kar sakta hai
+  // JD/DEO sirf apna khud ka password edit kar sakte hain
+  if (window.currentUser !== 'DPI' && window.currentUser !== userId) {
+    alert('⛔ Aap sirf apna password edit kar sakte hain.');
+    return;
+  }
+
+  const typeColors = { DPI:'#b71c1c', JD:'#0d47a1', DEO:'#1b5e20' };
+  const typeGrad   = { DPI:'linear-gradient(90deg,#b71c1c,#c62828)', JD:'linear-gradient(90deg,#0d47a1,#1565c0)', DEO:'linear-gradient(90deg,#1b5e20,#2e7d32)' };
+  const color = typeColors[userType] || '#333';
+  const grad  = typeGrad[userType]  || 'linear-gradient(90deg,#333,#555)';
+
+  const old = document.getElementById('uniEditPassModal');
+  if (old) old.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'uniEditPassModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000020;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+  <div style="background:white;border-radius:12px;width:90%;max-width:380px;box-shadow:0 15px 50px rgba(0,0,0,.5);overflow:hidden;font-family:sans-serif;">
+    <div style="background:${grad};color:white;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+      <b style="font-size:15px;">✏️ ${userType} Password Edit</b>
+      <button onclick="document.getElementById('uniEditPassModal').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px;font-weight:bold;">✕</button>
+    </div>
+    <div style="padding:24px;">
+      <p style="font-size:12px;color:${color};background:#f9f9f9;border-left:4px solid ${color};padding:8px 12px;border-radius:4px;margin:0 0 10px 0;font-weight:600;">
+        🔐 User: <span style="font-family:monospace;letter-spacing:1px;">${userId}</span>
+      </p>
+      <p style="font-size:12px;color:#888;background:#fff8e1;padding:8px 12px;border-radius:6px;margin:0 0 18px 0;font-weight:600;">⚠️ Password change karna ek sensitive action hai।</p>
+      <label style="font-size:11px;font-weight:bold;color:#333;">नया PASSWORD</label>
+      <input id="uniNewPass" type="password"
+        style="width:100%;padding:10px;margin:6px 0 14px 0;border:1.5px solid #ccc;border-radius:5px;font-size:14px;box-sizing:border-box;"
+        oninput="uniPwStrengthCheck(this.value)" placeholder="Naya password enter karein">
+      <label style="font-size:11px;font-weight:bold;color:#333;">PASSWORD CONFIRM करें</label>
+      <input id="uniConfirmPass" type="password"
+        style="width:100%;padding:10px;margin:6px 0 14px 0;border:1.5px solid #ccc;border-radius:5px;font-size:14px;box-sizing:border-box;"
+        placeholder="Dobara enter karein">
+      <div style="background:#eee;border-radius:4px;height:6px;overflow:hidden;margin-bottom:4px;">
+        <div id="uniPwBar" style="height:100%;width:0%;border-radius:4px;transition:width 0.3s,background 0.3s;"></div>
+      </div>
+      <div id="uniPwLabel" style="font-size:10px;color:#888;margin-bottom:14px;"></div>
+      <div id="uniEditPassErr" style="color:#c62828;font-size:11px;min-height:16px;margin-bottom:10px;font-weight:bold;"></div>
+      <button onclick="saveUniPassword('${userId}','${userType}')"
+        style="width:100%;padding:12px;background:${color};color:white;border:none;border-radius:5px;font-weight:bold;cursor:pointer;font-size:13px;">
+        💾 ${userId} Password Save करें
+      </button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  setTimeout(() => document.getElementById('uniNewPass').focus(), 100);
+}
+
+function uniPwStrengthCheck(val) {
+  const bar = document.getElementById('uniPwBar');
+  const label = document.getElementById('uniPwLabel');
+  if (!bar || !label) return;
+  let score = 0;
+  if (val.length >= 4) score++;
+  if (val.length >= 6) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const levels = [
+    {w:'0%',bg:'#eee',t:''},{w:'20%',bg:'#e53935',t:'बहुत कमज़ोर'},
+    {w:'40%',bg:'#f57c00',t:'कमज़ोर'},{w:'60%',bg:'#fbc02d',t:'ठीक है'},
+    {w:'80%',bg:'#7cb342',t:'अच्छा'},{w:'100%',bg:'#2e7d32',t:'बहुत मज़बूत ✅'}
+  ];
+  const lvl = levels[score] || levels[0];
+  bar.style.width = lvl.w; bar.style.background = lvl.bg;
+  label.innerText = lvl.t; label.style.color = lvl.bg;
+}
+
+function saveUniPassword(userId, userType) {
+  const newPass     = document.getElementById('uniNewPass').value.trim();
+  const confirmPass = document.getElementById('uniConfirmPass').value.trim();
+  const errDiv      = document.getElementById('uniEditPassErr');
+  if (!newPass || newPass.length < 4) { errDiv.innerHTML = '❌ Password कम से कम 4 characters का होना चाहिए।'; return; }
+  if (newPass !== confirmPass) { errDiv.innerHTML = '❌ Passwords match नहीं हुए।'; return; }
+  const CUSTOM_PASS_KEY = 'msErp_customPasswords';
+  const custom = JSON.parse(localStorage.getItem(CUSTOM_PASS_KEY) || '{}');
+  const oldPass = custom[userId] || districtCredentials[userId] || '(default)';
+  custom[userId] = newPass;
+  localStorage.setItem(CUSTOM_PASS_KEY, JSON.stringify(custom));
+  districtCredentials[userId] = newPass;
+  if (typeof auditLog === 'function') auditLog(userType + '_PASSWORD_CHANGED', userId + ' password changed by ' + (window.currentUser || 'DPI'));
+  const PW_RESET_LOG_KEY = 'dpi_pw_reset_log';
+  const resetLog = JSON.parse(localStorage.getItem(PW_RESET_LOG_KEY) || '[]');
+  resetLog.unshift({ userId, dateTime: new Date().toLocaleString('en-IN',{hour12:true}), timestamp: Date.now(), resetBy: window.currentUser || 'DPI', oldPass, newPass });
+  localStorage.setItem(PW_RESET_LOG_KEY, JSON.stringify(resetLog));
+  errDiv.innerHTML = '<span style="color:#2e7d32;font-weight:bold;">✅ ' + userId + ' Password successfully बदल दिया गया!</span>';
+  setTimeout(() => {
+    document.getElementById('uniEditPassModal')?.remove();
+    const tab = userType === 'DPI' ? 'dpi' : userType === 'JD' ? 'jd' : 'deo';
+    buildDistPassTable(tab);
+    showDistPassTab(tab);
+  }, 1500);
+}
+
+function filterDistPassTable(val) {
+  const q = val.trim().toUpperCase();
+  const cards = document.querySelectorAll('#distPassTableBody [data-id]');
+  cards.forEach(card => {
+    const id = card.dataset.id || '';
+    const label = card.dataset.label || '';
+    card.style.display = (!q || id.includes(q) || label.includes(q)) ? '' : 'none';
+  });
+}
+
+// Close on background click
+document.getElementById('districtPasswordPanel').addEventListener('click', function(e){
+  if(e.target === this) closeDistrictPasswordPanel();
+});
 </script>
