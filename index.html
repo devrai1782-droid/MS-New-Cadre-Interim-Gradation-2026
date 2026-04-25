@@ -1039,9 +1039,8 @@ window.alert = function(msg) {
 let keyTimer;
 
 window.addEventListener('keydown', function(e) {
-  if (e.key.toLowerCase() === 'a' && !keyTimer) {
+  if (e.key && e.key.toLowerCase() === 'a' && !keyTimer) {
     keyTimer = setTimeout(function() {
-      // Lock screen active hai to bina DPI check ke bhi kholne do
       const lockActive = document.getElementById('lockScreen')?.style.display === 'flex';
       if(!lockActive && window.currentUser !== 'DPI') return;
       openDpiPasswordModal();
@@ -1049,7 +1048,7 @@ window.addEventListener('keydown', function(e) {
   }
 });
 window.addEventListener('keyup', function(e) {
-  if (e.key.toLowerCase() === 'a') { clearTimeout(keyTimer); keyTimer = null; }
+  if (e.key && e.key.toLowerCase() === 'a') { clearTimeout(keyTimer); keyTimer = null; }
 });
 
 // ── DPI Password Modal ──
@@ -4423,12 +4422,11 @@ function summaryUploadDoc(officeKey) {
     if (fileInput) fileInput.click();
 }
 
-// Handle file selection and upload to Supabase
+// Handle file selection and upload to Supabase (with localStorage base64 fallback)
 async function handleSummaryFileUpload(event, officeKey) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Security: re-check on actual upload too
     if (window.currentUser !== officeKey && window.currentUser !== 'DPI') {
         myAlert('❌ Unauthorized upload attempt!');
         event.target.value = '';
@@ -4438,38 +4436,51 @@ async function handleSummaryFileUpload(event, officeKey) {
     const statusDiv = document.getElementById('uploadStatus_' + officeKey);
     if (statusDiv) { statusDiv.innerHTML = '⏳ Uploading...'; statusDiv.style.color = '#f39c12'; }
 
+    let publicUrl = null;
+
+    // Try Supabase Storage
     try {
         const filePath = 'summary_docs/' + officeKey + '_' + Date.now() + '_' + file.name;
         const { error } = await supabaseClient.storage.from('documents').upload(filePath, file);
-        
-        if (error) throw error;
-
-        const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(filePath);
-        const publicUrl = urlData.publicUrl;
-
-        // Save URL in localStorage (keyed by office)
-        localStorage.setItem(getSummaryDocKey(officeKey), JSON.stringify({
-            url: publicUrl,
-            name: file.name,
-            uploadedBy: window.currentUser,
-            uploadedAt: new Date().toLocaleString('hi-IN')
-        }));
-
-        if (statusDiv) { statusDiv.innerHTML = '✅ ' + file.name; statusDiv.style.color = '#27ae60'; }
-        myAlert('✅ Document Successfully Uploaded!\nFile: ' + file.name);
-
+        if (!error) {
+            const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(filePath);
+            publicUrl = urlData.publicUrl;
+        }
     } catch (err) {
-        console.error('Upload error:', err);
-        if (statusDiv) { statusDiv.innerHTML = '❌ Upload Failed'; statusDiv.style.color = '#e74c3c'; }
-        myAlert('❌ Upload Failed! Error: ' + err.message);
+        console.warn('Supabase storage unavailable, using local fallback:', err.message);
     }
+
+    // Build metadata — with base64 if no cloud URL
+    const meta = {
+        name: file.name,
+        url: publicUrl,
+        local_data: null,
+        uploadedBy: window.currentUser,
+        uploadedAt: new Date().toLocaleString('hi-IN')
+    };
+
+    if (!publicUrl) {
+        // Store file as base64 in localStorage
+        await new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = ev => { meta.local_data = ev.target.result; resolve(); };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    localStorage.setItem(getSummaryDocKey(officeKey), JSON.stringify(meta));
+
+    if (statusDiv) { statusDiv.innerHTML = '✅ ' + file.name; statusDiv.style.color = '#27ae60'; }
+    myAlert('✅ Document Successfully Uploaded!\nFile: ' + file.name + '\n\nSummary दोबारा खोलें — View button दिखेगा।');
+
     event.target.value = '';
 }
 
-// View uploaded document
+// View uploaded document — directly open, no intermediate popup
 function summaryViewDoc(officeKey) {
+    if (!officeKey) { myAlert('❌ Office key missing.'); return; }
     const stored = localStorage.getItem(getSummaryDocKey(officeKey));
-    
+
     if (!stored) {
         myAlert('❌ ' + officeKey + ' का कोई Document Upload नहीं किया गया है।');
         return;
@@ -4477,35 +4488,26 @@ function summaryViewDoc(officeKey) {
 
     try {
         const docInfo = JSON.parse(stored);
-        
-        // Create a nice popup to show doc info and open link
-        if (document.getElementById('docViewPopup')) document.getElementById('docViewPopup').remove();
 
-        const popup = document.createElement('div');
-        popup.id = 'docViewPopup';
-        popup.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
-        
-        popup.innerHTML = `
-        <div style="background:white;padding:25px;border-radius:10px;max-width:450px;width:90%;box-shadow:0 10px 30px rgba(0,0,0,0.4);font-family:sans-serif;">
-            <h3 style="margin:0 0 15px 0;color:#002e5b;border-bottom:2px solid #002e5b;padding-bottom:8px;">📄 Document Viewer</h3>
-            <table style="width:100%;font-size:13px;border-collapse:collapse;">
-                <tr><td style="padding:5px;font-weight:bold;color:#555;width:40%;">Office:</td><td style="padding:5px;color:#000;font-weight:600;">${officeKey}</td></tr>
-                <tr><td style="padding:5px;font-weight:bold;color:#555;">File Name:</td><td style="padding:5px;color:#1565c0;">${docInfo.name || 'N/A'}</td></tr>
-                <tr><td style="padding:5px;font-weight:bold;color:#555;">Uploaded By:</td><td style="padding:5px;">${docInfo.uploadedBy || 'N/A'}</td></tr>
-                <tr><td style="padding:5px;font-weight:bold;color:#555;">Upload Time:</td><td style="padding:5px;">${docInfo.uploadedAt || 'N/A'}</td></tr>
-            </table>
-            <div style="display:flex;gap:10px;margin-top:20px;justify-content:center;">
-                <button onclick="window.open('${docInfo.url}','_blank')" style="background:#1565c0;color:white;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:13px;">👁️ View Document</button>
-                <a href="${docInfo.url}" download="${docInfo.name}" style="background:#2e7d32;color:white;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;">⬇️ Download</a>
-                <button onclick="document.getElementById('docViewPopup').remove()" style="background:#c62828;color:white;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:13px;">✖ Close</button>
-            </div>
-        </div>`;
-        
-        document.body.appendChild(popup);
-        popup.addEventListener('click', function(e) { if(e.target === popup) popup.remove(); });
+        // Local base64 file
+        if (docInfo.local_data) {
+            const win = window.open('', '_blank');
+            if (!win) { myAlert('❌ Popup blocked! Browser में popup allow करें.'); return; }
+            win.document.write('<html><head><title>' + officeKey + ' Document</title></head><body style="margin:0;padding:0;"><iframe src="' + docInfo.local_data + '" style="width:100%;height:100vh;border:none;"></iframe></body></html>');
+            win.document.close();
+            return;
+        }
+
+        // Cloud URL
+        if (docInfo.url && !docInfo.url.startsWith('local:')) {
+            window.open(docInfo.url, '_blank');
+            return;
+        }
+
+        myAlert('❌ Document data नहीं मिला। कृपया दोबारा Upload करें।');
 
     } catch(e) {
-        myAlert('❌ Document info read करने में समस्या आई।');
+        myAlert('❌ Document read करने में समस्या आई।');
     }
 }
 </script>
