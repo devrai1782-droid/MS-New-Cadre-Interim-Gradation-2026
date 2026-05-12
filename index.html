@@ -711,7 +711,7 @@ tr.soft-deleted:hover td { background: #fecaca !important; }
 }
 
 /* ── 25. TOAST SYSTEM ── */
-#ums-toast-container {
+#ms-toast-container {
   position: fixed;
   top: 18px; right: 18px;
   z-index: 9999999;
@@ -720,7 +720,7 @@ tr.soft-deleted:hover td { background: #fecaca !important; }
   gap: 8px;
   pointer-events: none;
 }
-.ums-toast {
+.ms-toast {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -737,12 +737,12 @@ tr.soft-deleted:hover td { background: #fecaca !important; }
   border-left: 4px solid transparent;
   animation: toast-in 0.35s cubic-bezier(0.34,1.4,0.64,1) forwards;
 }
-.ums-toast.hide { animation: toast-out 0.25s ease forwards; }
-.ums-toast-success { background: #f0fdf4; color: #166534; border-left-color: #22c55e; }
-.ums-toast-error   { background: #fef2f2; color: #991b1b; border-left-color: #ef4444; }
-.ums-toast-info    { background: #eff6ff; color: #1e40af; border-left-color: #3b82f6; }
-.ums-toast-warning { background: #fffbeb; color: #92400e; border-left-color: #f59e0b; }
-.ums-toast-icon    { font-size: 18px; flex-shrink: 0; }
+.ms-toast.hide { animation: toast-out 0.25s ease forwards; }
+.ms-toast-success { background: #f0fdf4; color: #166534; border-left-color: #22c55e; }
+.ms-toast-error   { background: #fef2f2; color: #991b1b; border-left-color: #ef4444; }
+.ms-toast-info    { background: #eff6ff; color: #1e40af; border-left-color: #3b82f6; }
+.ms-toast-warning { background: #fffbeb; color: #92400e; border-left-color: #f59e0b; }
+.ms-toast-icon    { font-size: 18px; flex-shrink: 0; }
 
 /* ── 26. HIGHLIGHT / UPDATE ── */
 .update-highlight {
@@ -812,7 +812,7 @@ tr.soft-deleted:hover td { background: #fecaca !important; }
 @keyframes floatY { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
 @keyframes shimmer { 0%{left:-60%} 100%{left:120%} }
 @keyframes maintSpin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-@keyframes ums-row-flash { 0%{background:#dbeafe !important} 50%{background:#bfdbfe !important} 100%{background:transparent} }
+@keyframes ms-row-flash { 0%{background:#dbeafe !important} 50%{background:#bfdbfe !important} 100%{background:transparent} }
 
 /* ── 31. SELECTED / LOCKED ROWS ── */
 .selected-row {
@@ -820,19 +820,19 @@ tr.soft-deleted:hover td { background: #fecaca !important; }
   border-left: 3px solid var(--blue) !important;
 }
 tr.row-locked-external { box-shadow: inset 0 0 0 2px rgba(30,111,224,0.5); }
-.ums-save-flash td { animation: ums-row-flash 1.6s ease forwards !important; }
+.ms-save-flash td { animation: ms-row-flash 1.6s ease forwards !important; }
 
 /* ── 32. LOADING DOTS ── */
-.ums-loading-dot {
+.ms-loading-dot {
   display: inline-block;
   width: 7px; height: 7px;
   border-radius: 50%;
   background: var(--blue);
   animation: dotBounce 1.2s infinite ease-in-out;
 }
-.ums-loading-dot:nth-child(1){ animation-delay:0s }
-.ums-loading-dot:nth-child(2){ animation-delay:0.2s }
-.ums-loading-dot:nth-child(3){ animation-delay:0.4s }
+.ms-loading-dot:nth-child(1){ animation-delay:0s }
+.ms-loading-dot:nth-child(2){ animation-delay:0.2s }
+.ms-loading-dot:nth-child(3){ animation-delay:0.4s }
 @keyframes dotBounce {
   0%,80%,100%{ transform:scale(0.6); opacity:0.5 }
   40%{ transform:scale(1); opacity:1 }
@@ -847,11 +847,11 @@ tr.row-locked-external { box-shadow: inset 0 0 0 2px rgba(30,111,224,0.5); }
 #deadlineBadge { animation: pulseGlow 1.8s ease-in-out infinite; }
 
 /* ── 34. SHAKE ── */
-@keyframes ums-shake {
+@keyframes ms-shake {
   0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)}
   40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
 }
-.ums-shake { animation: ums-shake 0.4s ease forwards !important; }
+.ms-shake { animation: ms-shake 0.4s ease forwards !important; }
 
 /* ── 35. MOBILE ── */
 @media screen and (max-width: 768px) {
@@ -1270,7 +1270,7 @@ tr:hover td {
 /* Row animate — stagger removed */
 
 /* Save flash */
-.ums-save-flash td {
+.ms-save-flash td {
   animation: pa-row-flash 1.8s ease forwards !important;
   box-shadow: inset 0 0 0 2px #3b82f6 !important;
 }
@@ -1407,16 +1407,16 @@ tr.row-locked-external {
    § L.  TOAST NOTIFICATIONS
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-.ums-toast {
+.ms-toast {
   animation: pa-toast-in 0.42s cubic-bezier(0.34,1.4,0.64,1) forwards !important;
   backdrop-filter: blur(10px) !important;
   transition: all 0.2s ease !important;
 }
-.ums-toast:hover {
+.ms-toast:hover {
   transform: translateX(-5px) scale(1.02) !important;
   box-shadow: 0 14px 40px rgba(0,0,0,.26) !important;
 }
-.ums-toast.hide {
+.ms-toast.hide {
   animation: pa-toast-out 0.28s ease forwards !important;
 }
 
@@ -1603,22 +1603,22 @@ button[onclick*=".remove()"]:hover {
    § V.  SHAKE (validation error)
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-.ums-shake { animation: pa-shake 0.42s ease forwards !important; }
+.ms-shake { animation: pa-shake 0.42s ease forwards !important; }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    § W.  LOADING DOTS
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-.ums-loading-dot {
+.ms-loading-dot {
   display: inline-block;
   width: 8px; height: 8px;
   border-radius: 50%;
   background: var(--blue);
   animation: pa-dot-bounce 1.2s infinite ease-in-out;
 }
-.ums-loading-dot:nth-child(1){animation-delay:0s}
-.ums-loading-dot:nth-child(2){animation-delay:.2s}
-.ums-loading-dot:nth-child(3){animation-delay:.4s}
+.ms-loading-dot:nth-child(1){animation-delay:0s}
+.ms-loading-dot:nth-child(2){animation-delay:.2s}
+.ms-loading-dot:nth-child(3){animation-delay:.4s}
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    § X.  SCROLLBAR
@@ -1693,9 +1693,9 @@ onmouseout="this.style.background='linear-gradient(135deg,#f0f7ff,#e8f4fd)';this
 </button>
 
 <div style="height:1px;background:linear-gradient(90deg,transparent,#d4dce8,transparent);margin:20px 0 14px;"></div>
-<p style="color:#94a3b8;font-size:11px;text-align:center;margin:0;">Developed by &nbsp;<strong style="color:#475569;">Devendra Rai</strong>&nbsp; | &nbsp;📞 8319942987&nbsp; | &nbsp;©2026 UMS Gradation ERP</p>
+<p style="color:#94a3b8;font-size:11px;text-align:center;margin:0;">Developed by &nbsp;<strong style="color:#475569;">Devendra Rai</strong>&nbsp; | &nbsp;📞 8319942987&nbsp; | &nbsp;©2026 ms Gradation ERP</p>
 </div>
-<p style="margin-top:16px;font-size:11px;opacity:.55;letter-spacing:0.5px;">State Education Portal — UMS Gradation Module 2026</p>
+<p style="margin-top:16px;font-size:11px;opacity:.55;letter-spacing:0.5px;">State Education Portal — ms Gradation Module 2026</p>
 </div>
 <!-- ═══ USER MANUAL MODAL ═══ -->
 <div id="userManualModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(5,10,25,0.92);z-index:3000000;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
@@ -1934,11 +1934,11 @@ onmouseout="this.style.background='linear-gradient(135deg,#f0f7ff,#e8f4fd)';this
 
 <div id="customAlert"><div class="alert-box"><div id="alertMsg" style="margin-bottom:20px; white-space:pre-wrap; font-weight:bold;"></div><button onclick="closeAlert()" class="btn btn-blue">OK</button></div></div>
 
-<!-- ── UMS Toast Container ── -->
-<div id="ums-toast-container"></div>
+<!-- ── ms Toast Container ── -->
+<div id="ms-toast-container"></div>
 
 <!-- ═══ DPI ADMIN PANEL ═══ -->
-<!-- ═══ DPI ADMIN PANEL — UMS Style Full Panel ═══ -->
+<!-- ═══ DPI ADMIN PANEL — ms Style Full Panel ═══ -->
 <div id="dpiControlPanel" style="display:none;position:fixed;top:20px;right:20px;z-index:99999;background:white;padding:0;border:1px solid #ccc;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.3);width:490px;max-height:90vh;overflow:hidden;flex-direction:column;">
 <!-- Header -->
 <div style="background:linear-gradient(135deg,#0a1628,#102040);color:white;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-radius:12px 12px 0 0;border-bottom:2px solid rgba(240,165,0,0.3);">
@@ -2347,7 +2347,7 @@ style="padding:7px 14px;background:#c62828;color:white;border:none;border-radius
 </div>
 </div>
 
-<!-- TWO COLUMN GRID — UMS Style -->
+<!-- TWO COLUMN GRID — ms Style -->
 <div class="grid-3" style="display:grid;grid-template-columns:1.05fr 1fr;gap:14px;">
 
 <!-- ─── LEFT COLUMN ─── -->
@@ -2702,7 +2702,7 @@ oninput="this.value=this.value.toUpperCase();performSearch();">
 </div>
 </div>
 <footer style="text-align: center; padding: 10px; background: var(--navy); color: white; font-size: 12px; margin-top: 20px;">
-Developed by: <strong>Devendra Rai</strong> | 📞 8319942987 | ©2026 UMS Gradation ERP
+Developed by: <strong>Devendra Rai</strong> | 📞 8319942987 | ©2026 ms Gradation ERP
 </footer>
 <!-- JS Block 5 moved to app.js -->
 
